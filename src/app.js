@@ -13,7 +13,7 @@ const serviceAccount = require(process.env.FIREBASE_KEY_PATH);
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://pruebas-feria-web.firebaseio.com"
+    databaseURL: "https://palacio-de-ferias.firebaseio.com"
 });
 
 // Inicializa Firestore y configura Express
@@ -24,7 +24,7 @@ app.use(cors({
     methods: 'GET,POST,PUT,DELETE',   // Métodos HTTP permitidos
     allowedHeaders: 'Content-Type,Authorization',  // Cabeceras permitidas
     credentials: true  // Habilitar el envío de cookies/sesiones si es necesario
-  }));
+}));
 app.options('*', cors());
 app.use(express.json());
 
@@ -56,7 +56,7 @@ app.post('/login', async (req, res, next) => {
 
         // Comparar la contraseña hasheada
         const isPasswordValid = await bcrypt.compare(contraseña, userData.contraseña);
-        
+
 
         if (!isPasswordValid) {
             console.log('Contraseña incorrecta');
@@ -65,7 +65,14 @@ app.post('/login', async (req, res, next) => {
 
         // Si la contraseña es válida, generar el JWT
         console.log('Contraseña correcta, generando token');
-        const token = jwt.sign({ nombre, id: userDoc.id, iat: Math.floor(Date.now() / 1000) }, process.env.SECRET_KEY, { expiresIn: '1h' });
+        const token = jwt.sign(
+            {
+                nombre,
+                id: userDoc.id,
+                rol: userData.rol,
+                iat: Math.floor(Date.now() / 1000)
+            }
+            , process.env.SECRET_KEY, { expiresIn: '1h' });
 
         console.log('Token generado:', token);
         res.json({ token });
@@ -82,6 +89,67 @@ app.use((err, req, res, next) => {
     res.status(500).send('Ocurrió un error inesperado. Por favor intenta de nuevo.');
 });
 
+// Ruta para crear Usuarios
+app.post('/users', verificarToken, async (req, res, next) => {
+    const { nombre, email, contraseña, rol } = req.body;
+
+    if (!nombre || !email || !contraseña || !rol) {
+        return res.status(400).json({ error: 'Faltan datos.' });
+    }
+
+    try {
+        // Verificar si el usuario tiene rol de admin
+        if (req.user.rol !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado, se requiere rol de administrador.' });
+        }
+
+        // Buscar si ya existe un usuario con ese nombre
+        const userDoc = await db.collection('usuarios').doc(nombre).get();
+        if (userDoc.exists) {
+            return res.status(400).json({ error: 'El nombre de usuario ya existe.' });
+        }
+
+        // Hashear la contraseña
+        const hashedPassword = await bcrypt.hash(contraseña, 10);
+
+        // Crear un nuevo documento con el nombre de usuario como ID
+        await db.collection('usuarios').doc(nombre).set({
+            nombre,
+            email,
+            contraseña: hashedPassword,
+            rol,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        res.status(201).json({ message: 'Usuario creado exitosamente.' });
+    } catch (error) {
+        console.error('Error al crear usuario:', error);
+        res.status(500).json({ error: 'Error al crear el usuario.' });
+    }
+});
+
+// Ruta para obtener usuarios (protegida y solo accesible por administradores)
+app.get('/users', verificarToken, async (req, res) => {
+    try {
+        // Verificar si el usuario tiene rol de admin
+        if (req.user.rol !== 'admin') {
+            return res.status(403).json({ error: 'Acceso denegado, se requiere rol de administrador.' });
+        }
+
+        // Obtener todos los usuarios de Firestore
+        const usersSnapshot = await db.collection('usuarios').get();
+        const users = [];
+
+        usersSnapshot.forEach(doc => {
+            users.push({ id: doc.id, ...doc.data() });
+        });
+
+        res.json(users);
+    } catch (error) {
+        console.error('Error al obtener usuarios:', error);
+        res.status(500).json({ error: 'Error al obtener usuarios.' });
+    }
+});
 
 // Ruta protegida con JWT
 app.get('/protegido', verificarToken, (req, res) => {
@@ -89,30 +157,49 @@ app.get('/protegido', verificarToken, (req, res) => {
 });
 
 // Middleware para verificar el JWT
+// Middleware para verificar el JWT
 function verificarToken(req, res, next) {
-    const token = req.headers['authorization'];
+    const authHeader = req.headers['authorization'];
+
+    if (!authHeader) {
+        return res.status(403).send('Token no proporcionado');
+    }
+
+    // El token debe venir con el prefijo "Bearer "
+    const token = authHeader.split(' ')[1];  // Extraer el token de "Bearer <token>"
 
     if (!token) {
         return res.status(403).send('Token no proporcionado');
     }
 
-    jwt.verify(token, SECRET_KEY, async (err, decoded) => {
+    jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
         if (err) {
             return res.status(401).send('Token inválido');
         }
 
-        // Aquí puedes verificar si el token es más antiguo que el último cierre de sesión
-        const userDoc = await db.collection('usuarios').doc(decoded.nombre).get();
-        const userData = userDoc.data();
+        try {
+            // Verificar si el usuario existe en la base de datos
+            const userDoc = await db.collection('usuarios').doc(decoded.id).get();
+            const userData = userDoc.data();
 
-        if (userData.lastLogout && decoded.iat < Math.floor(userData.lastLogout / 1000)) {
-            return res.status(401).send('Token ha sido invalidado');
+            if (!userData) {
+                return res.status(404).send('Usuario no encontrado');
+            }
+
+            // Verificar si el token es válido respecto a la última vez que el usuario cerró sesión
+            if (userData.lastLogout && decoded.iat < Math.floor(userData.lastLogout / 1000)) {
+                return res.status(401).send('Token ha sido invalidado');
+            }
+
+            req.user = decoded;
+            next();
+        } catch (error) {
+            console.error('Error al verificar el usuario en la base de datos:', error);
+            return res.status(500).send('Error interno del servidor');
         }
-
-        req.user = decoded;
-        next();
     });
 }
+
 
 
 // Inicia el servidor
