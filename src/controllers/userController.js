@@ -49,4 +49,72 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, createUser};
+// Obtener usuario por ID
+const getUserById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Buscar el documento del usuario por su ID
+    const userDoc = await admin.firestore().collection('usuarios').doc(id).get();
+
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const userData = userDoc.data();
+    res.status(200).json(userData);
+  } catch (error) {
+    console.error('Error obteniendo el usuario por ID:', error);
+    res.status(500).json({ error: 'Error obteniendo el usuario' });
+  }
+};
+
+// Editar un usuario
+const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+
+  try {
+    const userRef = admin.firestore().collection('usuarios').doc(id);
+
+    // Verificar si el usuario existe
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Actualizar el usuario con los nuevos datos
+    await userRef.update(updatedData);
+    res.status(200).json({ message: 'Usuario actualizado exitosamente' });
+  } catch (error) {
+    console.error('Error actualizando usuario:', error);
+    res.status(500).json({ error: 'Error actualizando el usuario' });
+  }
+};
+
+// Eliminar un usuario
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const userRef = admin.firestore().collection('usuarios').doc(id);
+
+    // Verificar si el usuario existe
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Eliminar el documento del usuario
+    await userRef.delete();
+    res.status(200).json({ message: 'Usuario eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error eliminando usuario:', error);
+    res.status(500).json({ error: 'Error eliminando el usuario' });
+  }
+};
+
+
+module.exports = { getAllUsers, createUser, deleteUser,  updateUser,  getUserById };
+
+
