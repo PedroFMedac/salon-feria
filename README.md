@@ -48,41 +48,38 @@ app.js # Punto de entrada de la aplicación
     "nombre": "usuario",
     "contraseña": "password"
   }
-  
-**Respuesta (JSON):**
-```json
+  ````
+   **Respuesta (JSON):**
+   ```json
 
-  {
-    "token": "token_jwt_generado"
-  }
-````
+     {
+       "token": "token_jwt_generado"
+     }
+   ````
 
 ### Gestión de Usuarios (users.js)
 
 Todos los endpoints de esta sección requieren un token JWT válido en el header de autorización (Authorization: Bearer <token>).
 
-- **POST /users/: Crea un nuevo usuario.
+- **POST /users/**: Crea un nuevo usuario.
 
-**Body (JSON):**
-```json
-{
-  "nombre": "usuario",
-  "email": "correo@example.com",
-  "contraseña": "password",
-  "rol": "admin"
-}
-````
+   **Body (JSON):**
+   ```json
+   {
+     "nombre": "usuario",
+     "email": "correo@example.com",
+     "contraseña": "password",
+     "rol": "admin"
+   }
+   ````
 
-- **GET /users/: Obtiene la lista de todos los usuarios.
+- **GET /users/**: Obtiene la lista de todos los usuarios.
 
-- **GET /users/{id}
-: Obtiene los datos de un usuario específico por su ID.
+- **GET /users/{id}**: Obtiene los datos de un usuario específico por su ID.
 
-- **PUT /users/
-: Actualiza los datos de un usuario.
+- **PUT /users/**: Actualiza los datos de un usuario.
 
-- **DELETE /users/
-: Elimina un usuario por su ID.
+- **DELETE /users/**: Elimina un usuario por su ID.
 
 ## Middlewares
 ### authMiddleware.js: 
