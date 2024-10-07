@@ -57,10 +57,11 @@ app.js # Punto de entrada de la aplicación
   }
 ````
 
-###Gestión de Usuarios (users.js)
+### Gestión de Usuarios (users.js)
+
 Todos los endpoints de esta sección requieren un token JWT válido en el header de autorización (Authorization: Bearer <token>).
 
--**POST /users/: Crea un nuevo usuario.
+- **POST /users/: Crea un nuevo usuario.
 
 **Body (JSON):**
 ```json
@@ -72,18 +73,20 @@ Todos los endpoints de esta sección requieren un token JWT válido en el header
 }
 ````
 
--**GET /users/: Obtiene la lista de todos los usuarios.
+- **GET /users/: Obtiene la lista de todos los usuarios.
 
--**GET /users/{id}
+- **GET /users/{id}
 : Obtiene los datos de un usuario específico por su ID.
 
--**PUT /users/
+- **PUT /users/
 : Actualiza los datos de un usuario.
 
--**DELETE /users/
+- **DELETE /users/
 : Elimina un usuario por su ID.
 
-##Middlewares
-###authMiddleware.js: Valida el token JWT antes de acceder a rutas protegidas. Si el token es inválido o no se proporciona, retorna un error 403 o 401.
+## Middlewares
+### authMiddleware.js: 
+Valida el token JWT antes de acceder a rutas protegidas. Si el token es inválido o no se proporciona, retorna un error 403 o 401.
 
-###errorMiddleware.js: Maneja cualquier error no capturado en el sistema, devolviendo un mensaje de error genérico con código 500.
+### errorMiddleware.js: 
+Maneja cualquier error no capturado en el sistema, devolviendo un mensaje de error genérico con código 500.
