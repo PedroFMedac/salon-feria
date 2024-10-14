@@ -6,25 +6,47 @@ const { db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
 
 router.post('/login', async (req, res) => {
-  const { nombre, contraseña } = req.body;
-  if (!nombre || !contraseña) return res.status(400).json({ error: 'Faltan datos.' });
+  const { nameOrEmail, password } = req.body;
+  if (!nameOrEmail || !password) return res.status(400).json({ error: 'Faltan datos.' });
 
   try {
-    const userQuery = await db.collection('usuarios').where('nombre', '==', nombre).get();
-    if (userQuery.empty) return res.status(401).json({ error: 'Credenciales incorrectas' });
+    // Busca al usuario tanto por nombre como por email
+    const userQuery = await db.collection('users')
+      .where('name', '==', nameOrEmail)
+      .get();
 
-    const userDoc = userQuery.docs[0];
-    const userData = userDoc.data();
-    const isPasswordValid = await bcrypt.compare(contraseña, userData.contraseña);
+    // Si no se encuentra por nombre, buscar por email
+    if (userQuery.empty) {
+      const emailQuery = await db.collection('users')
+        .where('email', '==', nameOrEmail)
+        .get();
 
-    if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
+      if (emailQuery.empty) return res.status(401).json({ error: 'Credenciales incorrectas' });
+      const userDoc = emailQuery.docs[0];
+      const userData = userDoc.data();
 
-    const token = jwt.sign({ nombre, id: userDoc.id, rol: userData.rol }, process.env.SECRET_KEY, { expiresIn: '1h' });
-    res.json({ token });
+      // Comparar contraseñas
+      const isPasswordValid = await bcrypt.compare(password, userData.password);
+      if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
+
+      // Generar token JWT
+      const token = jwt.sign({ noame: userData.name, id: userDoc.id, rol: userData.rol }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      return res.json({ token });
+    } else {
+      const userDoc = userQuery.docs[0];
+      const userData = userDoc.data();
+
+      // Comparar contraseñas
+      const isPasswordValid = await bcrypt.compare(password, userData.password);
+      if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
+
+      // Generar token JWT
+      const token = jwt.sign({ name: userData.name, id: userDoc.id, rol: userData.rol }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      return res.json({ token });
+    }
   } catch (error) {
     console.error('Error en login:', error);
     res.status(500).send('Error en servidor');
   }
 });
-
 module.exports = router;

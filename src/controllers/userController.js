@@ -1,36 +1,77 @@
 // controllers/userController.js
 const {admin, db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 const createUser = async (req, res) => {
-  const { nombre, email, contraseña, rol } = req.body;
-  if (!nombre || !email || !contraseña || !rol) {
+  const { name, email, password, rol, company, cif, dni, studies } = req.body;
+
+  // Validar que todos los campos esenciales estén presentes
+  if (!name || !email || !password || !rol) {
     return res.status(400).json({ error: 'Faltan datos.' });
   }
 
-  try {
-    const userDoc = await db.collection('usuarios').doc(nombre).get();
-    if (userDoc.exists) return res.status(400).json({ error: 'El nombre de usuario ya existe.' });
+  // Validar que el rol sea uno de los permitidos
+  const rolesPermitidos = ['admin', 'co', 'visitor'];
+  if (!rolesPermitidos.includes(rol)) {
+    return res.status(400).json({ error: 'El rol no es válido.' });
+  }
 
-    const hashedPassword = await bcrypt.hash(contraseña, 10);
-    await db.collection('usuarios').doc(nombre).set({
-      nombre,
+  try {
+    // Verificar que el correo no esté en uso
+    const usersSnapshot = await db.collection('users').where('email', '==', email).get();
+    if (!usersSnapshot.empty) {
+      return res.status(400).json({ error: 'El correo ya está en uso.' });
+    }
+
+    // Hashear la contraseña
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Preparar el objeto de datos del usuario basado en el rol
+    let userData = {
+      name,
       email,
-      contraseña: hashedPassword,
+      password: hashedPassword,
       rol,
-      createdAt: new Date(),
-    });
-    res.status(201).json({ message: 'Usuario creado exitosamente.' });
+      createdAt: admin.firestore.Timestamp.now() // Usando el Timestamp de Firestore
+    };
+
+    // Si el rol es 'co', añadimos los campos de empresa, stand y cif
+    if (rol === 'co') {
+      if (!company || !cif) {
+        return res.status(400).json({ error: 'Faltan campos de empresa, stand y/o CIF para el CO.' });
+      }
+      userData.company = company;
+      userData.standId = uuidv4();
+      userData.cif = cif;
+    }
+
+    // Si el rol es 'visitante', añadimos los campos de dni y estudios
+    if (rol === 'visitor') {
+      if (!dni || !studies) {
+        return res.status(400).json({ error: 'Faltan campos de DNI y/o estudios para el visitante.' });
+      }
+      userData.dni = dni;
+      userData.studies = studies;
+    }
+
+    // Crear el documento en Firestore con un ID generado automáticamente
+    const userRef = await db.collection('users').add(userData);
+
+    // Devolver respuesta de éxito con el ID del usuario
+    res.status(201).json({ message: 'Usuario creado exitosamente.', id: userRef.id });
+    
   } catch (error) {
     console.error('Error al crear usuario:', error);
     res.status(500).json({ error: 'Error al crear el usuario.' });
   }
 };
 
+
 // Obtener todos los usuarios
 const getAllUsers = async (req, res) => {
   try {
-    const usersRef = admin.firestore().collection('usuarios');
+    const usersRef = admin.firestore().collection('users');
     const snapshot = await usersRef.get();
 
     if (snapshot.empty) {
@@ -55,7 +96,7 @@ const getUserById = async (req, res) => {
 
   try {
     // Buscar el documento del usuario por su ID
-    const userDoc = await admin.firestore().collection('usuarios').doc(id).get();
+    const userDoc = await admin.firestore().collection('users').doc(id).get();
 
     if (!userDoc.exists) {
       return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -75,7 +116,7 @@ const updateUser = async (req, res) => {
   const updatedData = req.body;
 
   try {
-    const userRef = admin.firestore().collection('usuarios').doc(id);
+    const userRef = admin.firestore().collection('users').doc(id);
 
     // Verificar si el usuario existe
     const userDoc = await userRef.get();
@@ -97,7 +138,7 @@ const deleteUser = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const userRef = admin.firestore().collection('usuarios').doc(id);
+    const userRef = admin.firestore().collection('users').doc(id);
 
     // Verificar si el usuario existe
     const userDoc = await userRef.get();

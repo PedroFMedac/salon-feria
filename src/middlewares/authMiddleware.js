@@ -12,7 +12,7 @@ async function verifyToken(req, res, next) {
   jwt.verify(token, process.env.SECRET_KEY, async (err, decoded) => {
     if (err) return res.status(401).send('Token inválido');
 
-    const userDoc = await db.collection('usuarios').doc(decoded.id).get();
+    const userDoc = await db.collection('users').doc(decoded.id).get();
     if (!userDoc.exists) return res.status(404).send('Usuario no encontrado');
 
     req.user = decoded;  // Añade los datos del usuario decodificado al request
