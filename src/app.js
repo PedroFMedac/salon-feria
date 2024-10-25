@@ -6,6 +6,7 @@ const { db } = require('./config/firebaseConfig');
 // Importar rutas
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const companyRoutes= require('./routes/company');
 const errorHandler = require('./middlewares/errorMiddleware');
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
+app.use('/company', companyRoutes);
 
 // Middleware de errores
 app.use(errorHandler);  // Usar el middleware de errores

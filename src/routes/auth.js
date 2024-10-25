@@ -30,7 +30,7 @@ router.post('/login', async (req, res) => {
       if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
 
       // Generar token JWT
-      const token = jwt.sign({ noame: userData.name, id: userDoc.id, rol: userData.rol }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId }, process.env.SECRET_KEY, { expiresIn: '1h' });
       return res.json({ token });
     } else {
       const userDoc = userQuery.docs[0];
@@ -41,7 +41,7 @@ router.post('/login', async (req, res) => {
       if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
 
       // Generar token JWT
-      const token = jwt.sign({ name: userData.name, id: userDoc.id, rol: userData.rol }, process.env.SECRET_KEY, { expiresIn: '1h' });
+      const token = jwt.sign({ name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId }, process.env.SECRET_KEY, { expiresIn: '1h' });
       return res.json({ token });
     }
   } catch (error) {
