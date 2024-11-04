@@ -30,7 +30,7 @@ const addVideo = async (req, res) => {
 
 const getVideo =  async (req, res) => {
     try {
-        const videosSnapshot = await db.collection('videos').get();
+        const videosSnapshot = await db.collection('video').get();
         const videos = videosSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
