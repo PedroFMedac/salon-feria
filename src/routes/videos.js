@@ -10,3 +10,5 @@ router.post ('/', verifyToken, (req,res, next) =>{
     }
     next();
 }, videoController.addVideo);
+
+module.exports = router;
