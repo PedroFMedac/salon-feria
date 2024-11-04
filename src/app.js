@@ -7,6 +7,7 @@ const { db } = require('./config/firebaseConfig');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const companyRoutes= require('./routes/company');
+const videoRoutes = require('./routes/video');
 const errorHandler = require('./middlewares/errorMiddleware');
 
 const app = express();
@@ -17,7 +18,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/company', companyRoutes);
-app.use('/videos',  videosRoutes);
+app.user('/videos', videoRoutes)
 
 
 // Middleware de errores
