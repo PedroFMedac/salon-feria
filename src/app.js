@@ -17,7 +17,7 @@ app.use(express.json());
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/company', companyRoutes);
-app.use('/video',  videoRoutes);
+app.use('/videos',  videosRoutes);
 
 
 // Middleware de errores
