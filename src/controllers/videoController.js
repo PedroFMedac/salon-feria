@@ -27,3 +27,5 @@ const addVideo = async (req, res) => {
 
     }
 }
+
+module.exports = {addVideo};
