@@ -28,4 +28,23 @@ const addVideo = async (req, res) => {
     }
 }
 
-module.exports = {addVideo};
+const getVideo =  async (req, res) => {
+    try {
+        const videosSnapshot = await db.collection('videos').get();
+        const videos = videosSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        res.status(200).json(videos);
+
+    }catch{
+        console.error("Error al obtener video", error);
+        return res.status(500).json({
+            message: 'Error al obtener video',
+            error: error.message
+        })
+    }
+}
+
+
+module.exports = {addVideo, getVideo};
