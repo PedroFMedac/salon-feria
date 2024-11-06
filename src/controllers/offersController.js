@@ -104,4 +104,69 @@ const getOffersById = async (req, res) => {
     }
 };
 
-module.exports = { addOffers, getOffersById };
+/**
+ * Elimina una oferta de trabajo por ID.
+ * 
+ * @async
+ * @function deleteOfferById
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID de la oferta a eliminar.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito o error.
+ */
+const deleteOfferById = async (req, res) => {
+    try {
+        const offerId = req.params.id;
+
+        await db.collection('offers').doc(offerId).delete();
+
+        return res.status(200).json({ message: 'Oferta eliminada con éxito' });
+
+    } catch (error) {
+        console.error("Error al eliminar oferta:", error);
+        return res.status(500).json({
+            message: 'Error al eliminar oferta',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Actualiza una oferta de trabajo por ID.
+ * 
+ * @async
+ * @function updateOfferById
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID de la oferta a actualizar.
+ * @param {Object} req.body - Datos actualizados de la oferta.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito o error.
+ */
+const updateOfferById = async (req, res) => {
+    try {
+        const offerId = req.params.id;
+        const { position, workplace_type, location, job_type, description } = req.body;
+
+        const updatedData = {
+            ...(position && { position }),
+            ...(workplace_type && { workplace_type }),
+            ...(location && { location }),
+            ...(job_type && { job_type }),
+            ...(description && { description }),
+            updatedAt: new Date().toISOString()
+        };
+
+        await db.collection('offers').doc(offerId).update(updatedData);
+
+        return res.status(200).json({ message: 'Oferta actualizada con éxito' });
+
+    } catch (error) {
+        console.error("Error al actualizar oferta:", error);
+        return res.status(500).json({
+            message: 'Error al actualizar oferta',
+            error: error.message
+        });
+    }
+};
+
+module.exports = { addOffers, getOffersById, deleteOfferById, updateOfferById };

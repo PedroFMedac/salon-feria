@@ -43,4 +43,43 @@ router.post('/', verifyToken, (req, res, next) => {
  */
 router.get('/by-id', verifyToken, offersController.getOffersById);
 
+/**
+ * Ruta para eliminar una oferta de trabajo por ID.
+ * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
+ * 
+ * @name DELETE /:id
+ * @function
+ * @memberof module:OffersRoutes
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID de la oferta a eliminar.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con un mensaje de éxito si se elimina la oferta, o un mensaje de error en caso de acceso denegado.
+ */
+router.delete('/:id', verifyToken, (req, res, next) => {
+    if (req.user.rol !== 'co') {
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    next(); // Si el usuario tiene rol de "empresa", se pasa al controlador
+}, offersController.deleteOfferById);
+
+/**
+ * Ruta para actualizar una oferta de trabajo por ID.
+ * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
+ * 
+ * @name PUT /:id
+ * @function
+ * @memberof module:OffersRoutes
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID de la oferta a actualizar.
+ * @param {Object} req.body - Datos actualizados de la oferta.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con un mensaje de éxito si se actualiza la oferta, o un mensaje de error en caso de acceso denegado.
+ */
+router.put('/:id', verifyToken, (req, res, next) => {
+    if (req.user.rol !== 'co') {
+        return res.status(403).json({ error: 'Acceso denegado' });
+    }
+    next(); // Si el usuario tiene rol de "empresa", se pasa al controlador
+}, offersController.updateOfferById);
+
 module.exports = router;
