@@ -27,12 +27,12 @@ const addOffers = async (req, res) => {
         }
 
         // Obtener la información de la empresa usando el companyID
-        const companyDoc = await db.collection('company').doc(companyID).get();
+        const companySnapshot = await db.collection('company')
+            .where('companyID', '==', companyID)
+            .get();
 
-        if (!companyDoc.exists) {
-            return res.status(404).json({ message: 'La empresa no existe' });
-        }
-        const companyData = companyDoc.data();
+        // Obtener los datos del primer documento que coincida (si se espera solo uno)
+        const companyData = companySnapshot.docs[0].data();
 
         const newOffer = {
             position,
