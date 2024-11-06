@@ -26,6 +26,13 @@ const addOffers = async (req, res) => {
             return res.status(400).json({ message: 'Todos los campos son obligatorios' });
         }
 
+        // Obtener la información de la empresa usando el companyID
+        const companyDoc = await db.collection('company').doc(companyID).get();
+
+        if (!companyDoc.exists) {
+            return res.status(404).json({ message: 'La empresa no existe' });
+        }
+
         const newOffer = {
             position,
             workplace_type,
@@ -33,6 +40,7 @@ const addOffers = async (req, res) => {
             job_type,
             description,
             companyID,
+            companyName: companyData.name,
             createdAt: new Date().toISOString()
         };
 
