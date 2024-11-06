@@ -1,8 +1,31 @@
-// controllers/userController.js
-const {admin, db } = require('../config/firebaseConfig');
+/**
+ * @module UserController
+ */
+
+const { admin, db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
+/**
+ * Crea un nuevo usuario en la base de datos.
+ * Valida los datos de entrada, verifica que el correo no esté en uso,
+ * hashea la contraseña y guarda los datos del usuario en Firestore.
+ * 
+ * @async
+ * @function createUser
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req.body - Cuerpo de la solicitud que contiene los datos del usuario.
+ * @param {string} req.body.name - Nombre del usuario.
+ * @param {string} req.body.email - Correo electrónico del usuario (único).
+ * @param {string} req.body.password - Contraseña del usuario.
+ * @param {string} req.body.rol - Rol del usuario ('admin', 'co' o 'visitor').
+ * @param {string} [req.body.company] - Nombre de la empresa (requerido si el rol es 'co').
+ * @param {string} [req.body.cif] - CIF de la empresa (requerido si el rol es 'co').
+ * @param {string} [req.body.dni] - DNI del usuario (requerido si el rol es 'visitor').
+ * @param {string} [req.body.studies] - Estudios del usuario (requerido si el rol es 'visitor').
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con un mensaje de éxito y el ID del usuario creado, o un mensaje de error.
+ */
 const createUser = async (req, res) => {
   const { name, email, password, rol, company, cif, dni, studies } = req.body;
 
@@ -39,14 +62,14 @@ const createUser = async (req, res) => {
     // Si el rol es 'co', añadimos los campos de empresa, stand y cif
     if (rol === 'co') {
       if (!company || !cif) {
-        return res.status(400).json({ error: 'Faltan campos de empresa, stand y/o CIF para el CO.' });
+        return res.status(400).json({ error: 'Faltan campos de empresa y/o CIF para el CO.' });
       }
       userData.company = company;
       userData.standId = uuidv4();
       userData.cif = cif;
     }
 
-    // Si el rol es 'visitante', añadimos los campos de dni y estudios
+    // Si el rol es 'visitor', añadimos los campos de dni y estudios
     if (rol === 'visitor') {
       if (!dni || !studies) {
         return res.status(400).json({ error: 'Faltan campos de DNI y/o estudios para el visitante.' });
@@ -67,8 +90,15 @@ const createUser = async (req, res) => {
   }
 };
 
-
-// Obtener todos los usuarios
+/**
+ * Obtiene todos los usuarios de la base de datos.
+ * 
+ * @async
+ * @function getAllUsers
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con una lista de todos los usuarios o un mensaje de error.
+ */
 const getAllUsers = async (req, res) => {
   try {
     const usersRef = admin.firestore().collection('users');
@@ -90,7 +120,16 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Obtener usuario por ID
+/**
+ * Obtiene un usuario por su ID.
+ * 
+ * @async
+ * @function getUserById
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID del usuario a obtener.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con los datos del usuario o un mensaje de error.
+ */
 const getUserById = async (req, res) => {
   const { id } = req.params;
 
@@ -110,7 +149,17 @@ const getUserById = async (req, res) => {
   }
 };
 
-// Editar un usuario
+/**
+ * Actualiza los datos de un usuario.
+ * 
+ * @async
+ * @function updateUser
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID del usuario a actualizar.
+ * @param {Object} req.body - Datos a actualizar en el usuario.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito o de error.
+ */
 const updateUser = async (req, res) => {
   const { id } = req.params;
   const updatedData = req.body;
@@ -133,7 +182,16 @@ const updateUser = async (req, res) => {
   }
 };
 
-// Eliminar un usuario
+/**
+ * Elimina un usuario por su ID.
+ * 
+ * @async
+ * @function deleteUser
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {string} req.params.id - ID del usuario a eliminar.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito o de error.
+ */
 const deleteUser = async (req, res) => {
   const { id } = req.params;
 
@@ -155,7 +213,4 @@ const deleteUser = async (req, res) => {
   }
 };
 
-
-module.exports = { getAllUsers, createUser, deleteUser,  updateUser,  getUserById };
-
-
+module.exports = { getAllUsers, createUser, deleteUser, updateUser, getUserById };

@@ -2,6 +2,43 @@
 
 Este proyecto es un backend basado en Node.js y Express, utilizando Firebase para la gestión de datos y autenticación. Proporciona endpoints para la autenticación de usuarios y la gestión de datos, con validación mediante JWT.
 
+## Tabla de Contenidos
+
+- [Requisitos Previos](#requisitos-previos)
+- [Instalación](#instalación)
+- [Configuración](#configuración)
+- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Rutas y Endpoints](#rutas-y-endpoints)
+  - [Autenticación (`/auth`)](#autenticación-auth)
+  - [Usuarios (`/users`)](#usuarios-users)
+  - [Empresas (`/company`)](#empresas-company)
+  - [Videos (`/videos`)](#videos-videos)
+  - [Ofertas (`/offers`)](#ofertas-offers)
+- [Manejo de Errores](#manejo-de-errores)
+- [Ejecutar el Servidor](#ejecutar-el-servidor)
+
+## Requisitos Previos
+
+- Node.js v14+ instalado en tu sistema.
+- Una cuenta de Firebase y un proyecto configurado con Firestore.
+- Clave secreta para JWT en tus variables de entorno.
+
+
+## Instalación
+
+1. Clona este repositorio en tu máquina local.
+   ```bash
+   git clone https://github.com/tu-usuario/tu-repo.git
+2.  Navega al directorio del proyecto.
+  ```bash
+  cd tu-repo
+
+3.  Instala las dependencias necesarias.
+  ```bash
+  npm install
+
+
+
 ## Dependencias
 
 El proyecto utiliza las siguientes dependencias principales:
@@ -15,16 +52,26 @@ El proyecto utiliza las siguientes dependencias principales:
 
 ## Estructura del Proyecto
 
-/config firebaseConfig.js # Configuración de Firebase
-
-/controllers userController.js # Controlador de operaciones relacionadas con usuarios
-
-/middlewares authMiddleware.js # Middleware de autenticación (verificación de tokens JWT) errorMiddleware.js # Middleware de manejo de errores
-
-/routes auth.js # Rutas de autenticación (login) users.js # Rutas para la gestión de usuarios
-
-app.js # Punto de entrada de la aplicación
-
+├── config/
+│   └── firebaseConfig.js       # Configuración de Firebase
+├── controllers/
+│   ├── authController.js       # Lógica de autenticación
+│   ├── companyController.js    # Lógica de empresas
+│   ├── offersController.js     # Lógica de ofertas
+│   ├── userController.js       # Lógica de usuarios
+│   └── videoController.js      # Lógica de videos
+├── middlewares/
+│   ├── authMiddleware.js       # Middleware para autenticación JWT
+│   └── errorMiddleware.js      # Middleware de manejo de errores
+├── routes/
+│   ├── auth.js                 # Rutas de autenticación
+│   ├── company.js              # Rutas de empresas
+│   ├── offers.js               # Rutas de ofertas
+│   ├── users.js                # Rutas de usuarios
+│   └── video.js                # Rutas de videos
+├── .env                        # Variables de entorno
+├── app.js                      # Configuración de la aplicación Express
+└── README.md                   # Documentación del proyecto
 
 ## Configuración
 
@@ -45,17 +92,18 @@ app.js # Punto de entrada de la aplicación
   **Body (JSON):**
   ```json
   {
-    "nombre": "usuario",
-    "contraseña": "password"
+    "nameOrEmail": "usuario@example.com",
+    "password": "password"
   }
   ````
-   **Respuesta (JSON):**
-   ```json
+  **Respuesta (JSON):**
+  ```json
 
      {
        "token": "token_jwt_generado"
      }
-   ````
+  
+  ````
 
 ### Gestión de Usuarios (users.js)
 

@@ -1,20 +1,27 @@
-// controllers/companyController.js
-
+/**
+ * @module CompanyController
+ */
 const { db } = require('../config/firebaseConfig');
 
-// Controlador para agregar una nueva empresa a la colección "company"
+/**
+ * Agrega una nueva empresa a la base de datos.
+ * Valida los datos de entrada y crea un nuevo documento en la colección "company".
+ * 
+ * @async
+ * @function addInfoCompany
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req.user - Información del usuario extraída del token.
+ * @param {Object} req.body - Datos enviados en el cuerpo de la solicitud.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito y ID de la empresa creada.
+ */
 const addInfoCompany = async (req, res) => {
     try {
-
-        const { id, rol, nombre } = req.user;
+        const { id, rol } = req.user;
         const { name, description, additional_information, documents, links, sector, email } = req.body;
 
         if (!name || !description) {
             return res.status(400).json({ message: 'Nombre y descripción son obligatorios' });
-        }
-
-        if (links && !Array.isArray(links)) {
-            return res.status(400).json({ message: 'El campo links debe ser un array de objetos' });
         }
 
         const validLinks = links && links.every(link => link.additionalButtonTitle && link.additionalButtonLink);
@@ -50,12 +57,21 @@ const addInfoCompany = async (req, res) => {
     }
 };
 
-//Controlador para asociar un STAND y un RECEP. a una empresa
-
+/**
+ * Asocia un stand y un recepcionista a una empresa.
+ * Actualiza o crea un documento en la colección "stand" con los datos proporcionados.
+ * 
+ * @async
+ * @function addStandAndRecep
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req.user - Información del usuario extraída del token.
+ * @param {Object} req.body - Datos enviados en el cuerpo de la solicitud.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito.
+ */
 const addStandAndRecep = async (req, res) => {
-
     try {
-        const { id, rol, nombre, standID } = req.user;
+        const { id, rol, standID } = req.user;
         const { URLStand, URLRecep } = req.body;
 
         if (!URLStand || !URLRecep) {
@@ -69,37 +85,46 @@ const addStandAndRecep = async (req, res) => {
             URLRecep,
             URLStand
         };
-        // Guarda o actualiza el documento en la colección "stand" con el ID proporcionado
+        
         const standRef = db.collection('stand').doc(standID);
-        await standRef.set(newStand);  // set() crea o actualiza el documento
+        await standRef.set(newStand); 
 
         return res.status(200).json({message: 'Stand y Recepcionista guardados correctamente'});
-    }catch(error){
+    } catch (error) {
         console.error("Error al agregar el stand y el recepcionista: ", error);
         return res.status(500).json({ message: 'Error interno del servidor'})
     }
 }
 
+/**
+ * Obtiene la información de la empresa según el ID del usuario.
+ * Solo los usuarios con rol `co` pueden acceder a esta información.
+ * 
+ * @async
+ * @function getCompanyInfo
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req.user - Información del usuario extraída del token.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con la información de la empresa.
+ */
 const getCompanyInfo = async (req, res) => {
     try {
-      const { id, rol } = req.user; // Obtenemos el companyID del token JWT
+      const { id, rol } = req.user;
   
       if (rol !== 'co') {
         return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
       }
   
-      // Consulta a Firestore para obtener el documento donde el campo companyID coincide con el token
       const companyQuery = await db.collection('company').where('companyID', '==', id).get();
   
       if (companyQuery.empty) {
         return res.status(404).json({ message: 'Empresa no encontrada' });
       }
   
-      // Asumimos que solo hay un documento que coincide con el companyID
       const companyDoc = companyQuery.docs[0];
       const companyData = companyDoc.data();
   
-      return res.status(200).json(companyData); // Devolvemos la información de la empresa
+      return res.status(200).json(companyData);
     } catch (error) {
       console.error('Error al obtener la empresa:', error);
       return res.status(500).json({

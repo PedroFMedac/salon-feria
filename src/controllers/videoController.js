@@ -1,5 +1,20 @@
+/**
+ * @module VideoController
+ */
 const { db } = require('../config/firebaseConfig');
 
+/**
+ * Agrega un nuevo video.
+ * Incluye el ID de la empresa y la URL del video.
+ * 
+ * @async
+ * @function addVideo
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req.user - Información del usuario.
+ * @param {Object} req.body - Datos del video.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito y ID del video creado.
+ */
 const addVideo = async (req, res) => {
     try {
         const { id, rol } = req.user;
@@ -10,7 +25,7 @@ const addVideo = async (req, res) => {
         const newVideo = {
             url,
             companyID
-        }
+        };
 
         const videoRef = await db.collection('video').add(newVideo);
 
@@ -19,16 +34,24 @@ const addVideo = async (req, res) => {
             id: videoRef.id
         });
     } catch (error) {
-        console.error("Error al agregar  video", error);
+        console.error("Error al agregar video", error);
         return res.status(500).json({
-            message: 'Error al  agregar video',
+            message: 'Error al agregar video',
             error: error.message
-        })
-
+        });
     }
-}
+};
 
-const getVideo =  async (req, res) => {
+/**
+ * Obtiene todos los videos.
+ * 
+ * @async
+ * @function getVideo
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con los videos disponibles.
+ */
+const getVideo = async (req, res) => {
     try {
         const videosSnapshot = await db.collection('video').get();
         const videos = videosSnapshot.docs.map((doc) => ({
@@ -37,14 +60,13 @@ const getVideo =  async (req, res) => {
         }));
         res.status(200).json(videos);
 
-    } catch (error){
+    } catch (error) {
         console.error("Error al obtener video", error);
         return res.status(500).json({
             message: 'Error al obtener video',
             error: error.message
-        })
+        });
     }
-}
+};
 
-
-module.exports = {addVideo, getVideo};
+module.exports = { addVideo, getVideo };
