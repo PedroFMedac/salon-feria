@@ -32,6 +32,7 @@ const addOffers = async (req, res) => {
         if (!companyDoc.exists) {
             return res.status(404).json({ message: 'La empresa no existe' });
         }
+        const companyData = companyDoc.data();
 
         const newOffer = {
             position,
