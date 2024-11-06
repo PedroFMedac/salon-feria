@@ -10,4 +10,6 @@ router.post('/', verifyToken, (req,res,next)=>{
     next();
 }, offersController.addOffers);
 
+router.get('/by-id', verifyToken, offersController.getOffersById);
+
 module.exports = router;
