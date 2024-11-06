@@ -29,13 +29,15 @@ Este proyecto es un backend basado en Node.js y Express, utilizando Firebase par
 1. Clona este repositorio en tu máquina local.
    ```bash
    git clone https://github.com/tu-usuario/tu-repo.git
+   ```
 2.  Navega al directorio del proyecto.
    ```bash
    cd tu-repo
-
+   ```
 3.  Instala las dependencias necesarias.
    ```bash
    npm install
+   ```
 
 
 
