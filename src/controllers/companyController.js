@@ -85,14 +85,14 @@ const addStandAndRecep = async (req, res) => {
             URLRecep,
             URLStand
         };
-        
-        const standRef = db.collection('stand').doc(standID);
-        await standRef.set(newStand); 
 
-        return res.status(200).json({message: 'Stand y Recepcionista guardados correctamente'});
+        const standRef = db.collection('stand').doc(standID);
+        await standRef.set(newStand);
+
+        return res.status(200).json({ message: 'Stand y Recepcionista guardados correctamente' });
     } catch (error) {
         console.error("Error al agregar el stand y el recepcionista: ", error);
-        return res.status(500).json({ message: 'Error interno del servidor'})
+        return res.status(500).json({ message: 'Error interno del servidor' })
     }
 }
 
@@ -109,30 +109,30 @@ const addStandAndRecep = async (req, res) => {
  */
 const getCompanyInfo = async (req, res) => {
     try {
-      const { id, rol } = req.user;
-  
-      if (rol !== 'co') {
-        return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
-      }
-  
-      const companyQuery = await db.collection('company').where('companyID', '==', id).get();
-  
-      if (companyQuery.empty) {
-        return res.status(404).json({ message: 'Empresa no encontrada' });
-      }
-  
-      const companyDoc = companyQuery.docs[0];
-      const companyData = companyDoc.data();
-  
-      return res.status(200).json(companyData);
+        const { id, rol } = req.user;
+
+        if (rol !== 'co') {
+            return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
+        }
+
+        const companyQuery = await db.collection('company').where('companyID', '==', id).get();
+
+        if (companyQuery.empty) {
+            return res.status(404).json({ message: 'Empresa no encontrada' });
+        }
+
+        const companyDoc = companyQuery.docs[0];
+        const companyData = companyDoc.data();
+
+        return res.status(200).json(companyData);
     } catch (error) {
-      console.error('Error al obtener la empresa:', error);
-      return res.status(500).json({
-        message: 'Error al obtener la empresa',
-        error: error.message,
-      });
+        console.error('Error al obtener la empresa:', error);
+        return res.status(500).json({
+            message: 'Error al obtener la empresa',
+            error: error.message,
+        });
     }
-  };
+};
 
 /**
  * Verifica el estado de los formularios de la empresa y el stand.
@@ -152,18 +152,16 @@ const getCompanyStatus = async (req, res) => {
         if (companySnapshot.empty) {
             return res.status(404).json({ message: 'Empresa no encontrada en la colección company' });
         }
+        const isAdditionalInfoComplete = true;
 
-        const companyData = companySnapshot.docs[0].data(); // Accede al primer documento
-        const isAdditionalInfoComplete = !!companyData.additionalInfoCompleted;
 
         // Consulta la colección "stand"
         const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
         if (standSnapshot.empty) {
             return res.status(404).json({ message: 'Stand no encontrado en la colección stand' });
         }
+        const isStandComplete = true;
 
-        const standData = standSnapshot.docs[0].data(); // Accede al primer documento
-        const isStandComplete = !!standData.standCompleted;
 
         // Respuesta con el estado de los formularios
         res.json({ isStandComplete, isAdditionalInfoComplete });
