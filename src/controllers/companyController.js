@@ -149,19 +149,11 @@ const getCompanyStatus = async (req, res) => {
 
         // Consulta la colección "company"
         const companySnapshot = await db.collection('company').where('companyID', '==', id).get();
-        if (companySnapshot.empty) {
-            return res.status(404).json({ message: 'Empresa no encontrada en la colección company' });
-        }
-        const isAdditionalInfoComplete = true;
-
+        const isAdditionalInfoComplete = !companySnapshot.empty; // Es true si se encuentra al menos un documento
 
         // Consulta la colección "stand"
         const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
-        if (standSnapshot.empty) {
-            return res.status(404).json({ message: 'Stand no encontrado en la colección stand' });
-        }
-        const isStandComplete = true;
-
+        const isStandComplete = !standSnapshot.empty; // Es true si se encuentra al menos un documento
 
         // Respuesta con el estado de los formularios
         res.json({ isStandComplete, isAdditionalInfoComplete });
