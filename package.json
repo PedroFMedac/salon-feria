@@ -16,6 +16,7 @@
     "express": "^4.21.0",
     "firebase-admin": "^12.5.0",
     "jsonwebtoken": "^9.0.2",
+    "node-cache": "^5.1.2",
     "uuid": "^10.0.0"
   }
 }

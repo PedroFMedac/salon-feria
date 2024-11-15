@@ -2,6 +2,7 @@
  * @module CompanyController
  */
 const { db } = require('../config/firebaseConfig');
+const { getFromCache, setInCache } = require('../config/cacheManager');
 
 /**
  * Agrega una nueva empresa a la base de datos.
@@ -140,26 +141,36 @@ const getCompanyInfo = async (req, res) => {
  * @param {Object} res - Objeto de respuesta HTTP.
  */
 const getCompanyStatus = async (req, res) => {
+    const { id } = req.user;
+
     try {
-        const { id, rol } = req.user;
-
-        if (rol !== 'co') {
-            return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
-        }
-
-        // Consulta la colección "company"
-        const companySnapshot = await db.collection('company').where('companyID', '==', id).get();
-        const isAdditionalInfoComplete = !companySnapshot.empty; // Es true si se encuentra al menos un documento
-
-        // Consulta la colección "stand"
-        const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
-        const isStandComplete = !standSnapshot.empty; // Es true si se encuentra al menos un documento
-
-        // Respuesta con el estado de los formularios
-        res.json({ isStandComplete, isAdditionalInfoComplete });
+      // Verificar en caché si ya existe información del estado
+      const cachedStatus = await getFromCache(`company-status-${id}`);
+  
+      if (cachedStatus) {
+        return res.json(cachedStatus);
+      }
+  
+      // Consultar Firestore
+      const companySnapshot = await db.collection('company').where('companyID', '==', id).get();
+      const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
+  
+      if (companySnapshot.empty || standSnapshot.empty) {
+        return res.status(404).json({ error: 'Datos no encontrados.' });
+      }
+  
+      const isAdditionalInfoComplete = !!companySnapshot.docs[0].data().additionalInfoCompleted;
+      const isStandComplete = !!standSnapshot.docs[0].data().standCompleted;
+  
+      const status = { isAdditionalInfoComplete, isStandComplete };
+  
+      // Almacenar en caché el estado durante 30 minutos
+      await setInCache(`company-status-${id}`, status, 1800);
+  
+      res.json(status);
     } catch (error) {
-        console.error('Error al verificar el estado de los formularios:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+      console.error('Error al verificar el estado:', error);
+      res.status(500).json({ error: 'Error en servidor' });
     }
 };
 

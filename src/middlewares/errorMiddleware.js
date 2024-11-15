@@ -19,7 +19,10 @@ const errorHandler = (err, req, res, next) => {
     console.error(err.stack);
 
     // Responder con un mensaje de error genérico al cliente
-    res.status(500).send('Ocurrió un error inesperado. Por favor intenta de nuevo.');
+    res.status(err.status || 500).json({
+        message: err.message || 'Error interno del servidor',
+        error: process.env.NODE_ENV === 'development' ? err : undefined,
+    });
 };
 
 module.exports = errorHandler;

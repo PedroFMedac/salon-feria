@@ -7,6 +7,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
+const { get, set } = require('../config/cacheManager');
 
 /**
  * Ruta de autenticación para iniciar sesión.
@@ -25,60 +26,52 @@ const bcrypt = require('bcryptjs');
 router.post('/login', async (req, res) => {
   const { nameOrEmail, password } = req.body;
 
-  // Validación de los campos de entrada
-  if (!nameOrEmail || !password) return res.status(400).json({ error: 'Faltan datos.' });
+  if (!nameOrEmail || !password) {
+    return res.status(400).json({ error: 'Faltan datos.' });
+  }
 
   try {
-    // Busca al usuario tanto por nombre como por email
-    const userQuery = await db.collection('users')
-      .where('name', '==', nameOrEmail)
-      .get();
+    const cachedUser = get(nameOrEmail);
 
-    // Si no se encuentra por nombre, buscar por email
-    if (userQuery.empty) {
-      const emailQuery = await db.collection('users')
-        .where('email', '==', nameOrEmail)
-        .get();
+    let userData;
 
-      // Si no se encuentra ningún documento, retornar error de credenciales
-      if (emailQuery.empty) return res.status(401).json({ error: 'Credenciales incorrectas' });
-      
-      const userDoc = emailQuery.docs[0];
-      const userData = userDoc.data();
-
-      // Comparar contraseñas usando bcrypt
-      const isPasswordValid = await bcrypt.compare(password, userData.password);
-      if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
-      // Generar token JWT si las credenciales son válidas
-      const token = jwt.sign(
-        { name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId },
-        process.env.SECRET_KEY,
-        { expiresIn: '1h' }
-      );
-      return res.json({ token });
+    if (cachedUser) {
+      userData = cachedUser;
     } else {
-      // Usuario encontrado por nombre
-      const userDoc = userQuery.docs[0];
-      const userData = userDoc.data();
+      const userQuery = await db.collection('users').where('name', '==', nameOrEmail).get();
 
-      // Comparar contraseñas usando bcrypt
-      const isPasswordValid = await bcrypt.compare(password, userData.password);
-      if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
+      if (userQuery.empty) {
+        const emailQuery = await db.collection('users').where('email', '==', nameOrEmail).get();
 
-      // Generar token JWT si las credenciales son válidas
-      const token = jwt.sign(
-        { name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId },
-        process.env.SECRET_KEY,
-        { expiresIn: '1h' }
-      );
-      return res.json({ token });
+        if (emailQuery.empty) {
+          return res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
+
+        userData = emailQuery.docs[0].data();
+      } else {
+        userData = userQuery.docs[0].data();
+      }
+
+      set(nameOrEmail, userData, 3600); // Almacenar en caché
     }
+
+    const isPasswordValid = await bcrypt.compare(password, userData.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Credenciales incorrectas' });
+    }
+
+    const token = jwt.sign(
+      { name: userData.name, id: userData.id, rol: userData.rol },
+      process.env.SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+
+    res.json({ token });
   } catch (error) {
-    // Manejo de errores
     console.error('Error en login:', error);
     res.status(500).send('Error en servidor');
   }
 });
 
 module.exports = router;
+
