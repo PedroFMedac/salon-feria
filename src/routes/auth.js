@@ -7,7 +7,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const { db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
-const { get, set } = require('../config/cacheManager');
+const { get, set } = require('../util/cacheManager');
 
 /**
  * Ruta de autenticación para iniciar sesión.

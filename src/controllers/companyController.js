@@ -2,7 +2,7 @@
  * @module CompanyController
  */
 const { db } = require('../config/firebaseConfig');
-const { get, set } = require('../config/cacheManager');
+const { get, set } = require('../util/cacheManager');
 
 /**
  * Agrega una nueva empresa a la base de datos.
