@@ -76,6 +76,6 @@ router.get('/getCompany', verifyToken, companyController.getCompanyInfo);
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con el estado de los formularios (stand y adicional), o un mensaje de error si ocurre algún problema.
  */
-router.get('/company/status', verifyToken, companyController.getCompanyStatus);
+router.get('/status', verifyToken, companyController.getCompanyStatus);
 
 module.exports = router;
