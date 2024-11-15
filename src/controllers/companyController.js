@@ -2,7 +2,7 @@
  * @module CompanyController
  */
 const { db } = require('../config/firebaseConfig');
-const { getFromCache, setInCache } = require('../config/cacheManager');
+const { get, set } = require('../config/cacheManager');
 
 /**
  * Agrega una nueva empresa a la base de datos.
@@ -145,7 +145,7 @@ const getCompanyStatus = async (req, res) => {
 
     try {
       // Verificar en caché si ya existe información del estado
-      const cachedStatus = await getFromCache(`company-status-${id}`);
+      const cachedStatus = await get(`company-status-${id}`);
   
       if (cachedStatus) {
         return res.json(cachedStatus);
@@ -165,7 +165,7 @@ const getCompanyStatus = async (req, res) => {
       const status = { isAdditionalInfoComplete, isStandComplete };
   
       // Almacenar en caché el estado durante 30 minutos
-      await setInCache(`company-status-${id}`, status, 1800);
+      await set(`company-status-${id}`, status, 1800);
   
       res.json(status);
     } catch (error) {
