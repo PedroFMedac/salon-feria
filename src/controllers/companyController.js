@@ -134,4 +134,43 @@ const getCompanyInfo = async (req, res) => {
     }
   };
 
-module.exports = { addInfoCompany, addStandAndRecep, getCompanyInfo };
+/**
+ * Verifica el estado de los formularios de la empresa y el stand.
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ */
+const getCompanyStatus = async (req, res) => {
+    try {
+        const { id, rol } = req.user;
+
+        if (rol !== 'co') {
+            return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
+        }
+
+        // Consulta la colección "company"
+        const companySnapshot = await db.collection('company').where('companyID', '==', id).get();
+        if (companySnapshot.empty) {
+            return res.status(404).json({ message: 'Empresa no encontrada en la colección company' });
+        }
+
+        const companyData = companySnapshot.docs[0].data(); // Accede al primer documento
+        const isAdditionalInfoComplete = !!companyData.additionalInfoCompleted;
+
+        // Consulta la colección "stand"
+        const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
+        if (standSnapshot.empty) {
+            return res.status(404).json({ message: 'Stand no encontrado en la colección stand' });
+        }
+
+        const standData = standSnapshot.docs[0].data(); // Accede al primer documento
+        const isStandComplete = !!standData.standCompleted;
+
+        // Respuesta con el estado de los formularios
+        res.json({ isStandComplete, isAdditionalInfoComplete });
+    } catch (error) {
+        console.error('Error al verificar el estado de los formularios:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
+};
+
+module.exports = { addInfoCompany, addStandAndRecep, getCompanyInfo, getCompanyStatus };
