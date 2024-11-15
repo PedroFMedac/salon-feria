@@ -3,7 +3,7 @@ const admin = require('firebase-admin');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const serviceAccount = require('./palacio-de-ferias-firebase-adminsdk-k83w1-39fe943ebb.json');
+const serviceAccount = require('/etc/secrets/palacio-de-ferias-firebase-adminsdk-k83w1-39fe943ebb.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
