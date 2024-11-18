@@ -107,7 +107,7 @@ const addStandAndRecep = async (req, res) => {
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con la información de la empresa.
  */
-const getCompanyInfo = async (req, res) => {
+const  getCompanyInfo = async (req, res) => {
     try {
       const { id, rol } = req.user;
   

@@ -2,7 +2,7 @@
  * @module UserController
  */
 
-const { admin, db } = require('../config/firebaseConfig');
+const { admin, db } =  require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 

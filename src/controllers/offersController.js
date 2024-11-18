@@ -72,7 +72,7 @@ const addOffers = async (req, res) => {
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con las ofertas de la empresa.
  */
-const getOffersById = async (req, res) => {
+const  getOffersById = async (req, res) => {
     try {
         const { id, rol } = req.user;
 

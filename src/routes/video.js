@@ -8,7 +8,7 @@ const { verifyToken } = require('../middlewares/authMiddleware.js');
 const videoController = require('../controllers/videoController.js');
 
 /**
- * Ruta para agregar un nuevo video.
+ * Ruta para agregar un  nuevo video.
  * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
  * 
  * @name POST /

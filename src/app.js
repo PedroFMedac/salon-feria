@@ -1,6 +1,6 @@
 /**
  * @file app.js - Configuración principal de la aplicación.
- * Configura el servidor Express, establece las rutas y el middleware de errores.
+ * Configura el  servidor Express, establece las rutas y el middleware de errores.
  */
 
 const express = require('express');

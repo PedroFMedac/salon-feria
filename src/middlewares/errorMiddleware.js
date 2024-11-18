@@ -14,7 +14,7 @@
  * @param {Function} next - Función para pasar al siguiente middleware.
  * @returns {Object} Respuesta JSON con un mensaje de error y un código de estado 500.
  */
-const errorHandler = (err, req, res, next) => {
+const  errorHandler = (err, req, res, next) => {
     // Registrar el error en la consola
     console.error(err.stack);
 

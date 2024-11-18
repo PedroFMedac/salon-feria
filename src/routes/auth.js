@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
       const userDoc = emailQuery.docs[0];
       const userData = userDoc.data();
 
-      // Comparar contraseñas usando bcrypt
+       // Comparar contraseñas usando bcrypt
       const isPasswordValid = await bcrypt.compare(password, userData.password);
       if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
 

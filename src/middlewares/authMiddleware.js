@@ -1,7 +1,7 @@
 /**
  * @module AuthMiddleware
  */
-const jwt = require('jsonwebtoken');
+const jwt =  require('jsonwebtoken');
 const { db } = require('../config/firebaseConfig');
 
 /**

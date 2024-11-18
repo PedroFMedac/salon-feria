@@ -9,7 +9,7 @@ const userController = require('../controllers/userController');
 
 /**
  * Ruta para crear un nuevo usuario.
- * Solo los usuarios con rol de "administrador" pueden acceder a esta ruta.
+ * Solo los usuarios  con rol de "administrador" pueden acceder a esta ruta.
  * 
  * @name POST /
  * @function

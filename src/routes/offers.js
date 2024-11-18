@@ -19,7 +19,7 @@ const offersController = require('../controllers/offersController.js');
  * @param {string} req.user.rol - Rol del usuario.
  * @param {Object} res - Objeto de respuesta HTTP.
  * @param {Function} next - Función para pasar al siguiente middleware.
- * @returns {Object} JSON con un mensaje de éxito si se crea la oferta, o un mensaje de error en caso de acceso denegado.
+ * @returns {Object}  JSON con un mensaje de éxito si se crea la oferta, o un mensaje de error en caso de acceso denegado.
  */
 router.post('/', verifyToken, (req, res, next) => {
     if (req.user.rol !== 'co') {
