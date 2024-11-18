@@ -76,7 +76,12 @@ const getOffersById = async (req, res) => {
     try {
         const { id, rol } = req.user;
 
+        
+
         const userId = rol === 'co' ? id : req.body.companyID;
+
+        console.log('Datos enviados al backend:', { companyID: this.companyID });
+
 
         if (!userId) {
             return res.status(400).json({ message: 'El ID es obligatorio' });
