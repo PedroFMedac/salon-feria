@@ -80,7 +80,7 @@ const getOffersById = async (req, res) => {
 
         const userId = rol === 'co' ? id : req.body.companyID;
 
-        console.log('Datos enviados al backend:', { companyID: this.companyID });
+        console.log('Datos enviados al backend:', { id: this.id });
 
 
         if (!userId) {
