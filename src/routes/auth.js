@@ -81,7 +81,7 @@ router.post('/login', async (req, res) => {
 
     // Configurar cookie segura con el token
     res.cookie('token', token, {
-      httpOnly: true, // Protege contra XSS
+      httpOnly: false, // Protege contra XSS
       secure: true, // Solo en HTTPS
       sameSite: 'Strict', // Previene CSRF
       maxAge: 7 * 24 * 60 * 1000, // 1 semana
