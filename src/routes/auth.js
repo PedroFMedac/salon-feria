@@ -130,7 +130,11 @@ router.get('/role', verifyToken, (req, res) => {
 });
 
 router.get('/status', verifyToken, (req, res) => {
-  res.json({ isLoggedIn: true, userRole: req.user.rol });
+  if (req.user) {
+    res.status(200).json({ isLoggedIn: true, userRole: req.user.rol });
+  } else {
+    res.status(401).json({ isLoggedIn: false });
+  }
 });
 
 /**
