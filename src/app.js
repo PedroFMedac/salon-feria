@@ -1,10 +1,11 @@
 /**
  * @file app.js - Configuración principal de la aplicación.
- * Configura el  servidor Express, establece las rutas y el middleware de errores.
+ * Configura el servidor Express, establece las rutas y el middleware de errores.
  */
 
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser'); // Importar cookie-parser
 const { db } = require('./config/firebaseConfig');
 
 // Importar rutas
@@ -17,9 +18,13 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const app = express();
 
-// Middleware para habilitar CORS y parseo de JSON
-app.use(cors());
+// Middleware para habilitar CORS, parseo de JSON y cookies
+app.use(cors({
+  origin: 'http://localhost:4200', // Cambia por el dominio del frontend en producción
+  credentials: true, // Permitir envío de cookies
+}));
 app.use(express.json());
+app.use(cookieParser()); // Parseo de cookies
 
 /**
  * Configuración de rutas de la aplicación.
