@@ -135,4 +135,4 @@ const  getCompanyInfo = async (req, res) => {
     }
 };
 
-module.exports = { addInfoCompany, addStandAndRecep, getCompanyInfo, getCompanyStatus };
+module.exports = { addInfoCompany, addStandAndRecep, getCompanyInfo };
