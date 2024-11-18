@@ -30,7 +30,7 @@ const addInfoCompany = async (req, res) => {
             return res.status(400).json({ message: 'Cada link debe tener un título y una URL válida' });
         }
 
-        const companyID = rol === 'co' ? id : req.body.companyID;
+        const companyID = rol === 'co' ? id : req.body.id;
 
         const newCompany = {
             name,
@@ -127,7 +127,7 @@ const getCompanyInfo = async (req, res) => {
 
         return res.status(200).json(companyData);
     } catch (error) {
-        console.error('Error al obtener la empresa:', error);
+        console.error('Error al obtener la empresa para las ofertas:', error);
         return res.status(500).json({
             message: 'Error al obtener la empresa',
             error: error.message,
