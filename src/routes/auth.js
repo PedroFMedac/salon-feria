@@ -129,6 +129,10 @@ router.get('/role', verifyToken, (req, res) => {
   }
 });
 
+router.get('/status', verifyToken, (req, res) => {
+  res.json({ isLoggedIn: true, userRole: req.user.rol });
+});
+
 /**
  * Ruta para cerrar sesión.
  * Elimina la cookie que contiene el token JWT.
