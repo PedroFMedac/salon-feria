@@ -9,14 +9,12 @@ const userController = require('../controllers/userController');
 
 /**
  * Ruta para crear un nuevo usuario.
- * Solo los usuarios  con rol de "administrador" pueden acceder a esta ruta.
+ * Solo los usuarios con rol de "administrador" pueden acceder a esta ruta.
  * 
  * @name POST /
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario autenticado.
  * @param {Object} res - Objeto de respuesta HTTP.
@@ -38,8 +36,6 @@ router.post('/', verifyToken, (req, res, next) => {
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario autenticado.
  * @param {Object} res - Objeto de respuesta HTTP.
@@ -61,8 +57,6 @@ router.delete('/:id', verifyToken, (req, res, next) => {
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.uid - ID del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario autenticado.
@@ -85,8 +79,6 @@ router.put('/:id', verifyToken, (req, res, next) => {
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con la lista de usuarios.
  */
@@ -100,8 +92,6 @@ router.get('/', verifyToken, userController.getAllUsers);
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {string} req.params.id - ID del usuario a obtener.
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con los datos del usuario.

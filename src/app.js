@@ -5,7 +5,6 @@
 
 const express = require('express');
 const cors = require('cors');
-const cookieParser = require('cookie-parser'); // Importar cookie-parser
 const { db } = require('./config/firebaseConfig');
 
 // Importar rutas
@@ -14,17 +13,13 @@ const userRoutes = require('./routes/users');
 const companyRoutes = require('./routes/company');
 const videoRoutes = require('./routes/video');
 const offersRoutes = require('./routes/offers');
-const errorMiddleware = require('./middlewares/errorMiddleware');
+const errorHandler = require('./middlewares/errorMiddleware');
 
 const app = express();
 
-// Middleware para habilitar CORS, parseo de JSON y cookies
-app.use(cors({
-  origin: 'http://localhost:4200', // Cambia por el dominio del frontend en producción
-  credentials: true, // Permitir envío de cookies
-}));
+// Middleware para habilitar CORS y parseo de JSON
+app.use(cors());
 app.use(express.json());
-app.use(cookieParser()); // Parseo de cookies
 
 /**
  * Configuración de rutas de la aplicación.
@@ -40,7 +35,7 @@ app.use('/videos', videoRoutes);    // Rutas para videos
 app.use('/offers', offersRoutes);   // Rutas para ofertas
 
 // Middleware de manejo de errores
-app.use(errorMiddleware); // Usa el middleware de errores personalizado
+app.use(errorHandler); // Usa el middleware de errores personalizado
 
 // Configuración del puerto y inicio del servidor
 const PORT = process.env.PORT || 3000;

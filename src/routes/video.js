@@ -8,15 +8,13 @@ const { verifyToken } = require('../middlewares/authMiddleware.js');
 const videoController = require('../controllers/videoController.js');
 
 /**
- * Ruta para agregar un  nuevo video.
+ * Ruta para agregar un nuevo video.
  * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
  * 
  * @name POST /
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario autenticado.
  * @param {Object} res - Objeto de respuesta HTTP.
@@ -38,8 +36,6 @@ router.post('/', verifyToken, (req, res, next) => {
  * @function
  * @memberof module:UsersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario autenticado.
  * @param {Object} res - Objeto de respuesta HTTP.

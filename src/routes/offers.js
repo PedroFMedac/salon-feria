@@ -15,13 +15,11 @@ const offersController = require('../controllers/offersController.js');
  * @function
  * @memberof module:OffersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario.
  * @param {Object} res - Objeto de respuesta HTTP.
  * @param {Function} next - Función para pasar al siguiente middleware.
- * @returns {Object}  JSON con un mensaje de éxito si se crea la oferta, o un mensaje de error en caso de acceso denegado.
+ * @returns {Object} JSON con un mensaje de éxito si se crea la oferta, o un mensaje de error en caso de acceso denegado.
  */
 router.post('/', verifyToken, (req, res, next) => {
     if (req.user.rol !== 'co') {
@@ -38,8 +36,6 @@ router.post('/', verifyToken, (req, res, next) => {
  * @function
  * @memberof module:OffersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {Object} req.user - Información del usuario autenticado.
  * @param {string} req.user.rol - Rol del usuario.
  * @param {Object} res - Objeto de respuesta HTTP.
@@ -55,8 +51,6 @@ router.get('/by-id', verifyToken, offersController.getOffersById);
  * @function
  * @memberof module:OffersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {string} req.params.id - ID de la oferta a eliminar.
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con un mensaje de éxito si se elimina la oferta, o un mensaje de error en caso de acceso denegado.
@@ -76,8 +70,6 @@ router.delete('/:id', verifyToken, (req, res, next) => {
  * @function
  * @memberof module:OffersRoutes
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.cookies - Cookies enviadas por el cliente.
- * @param {string} req.cookies.token - Token JWT almacenado en la cookie.
  * @param {string} req.params.id - ID de la oferta a actualizar.
  * @param {Object} req.body - Datos actualizados de la oferta.
  * @param {Object} res - Objeto de respuesta HTTP.
