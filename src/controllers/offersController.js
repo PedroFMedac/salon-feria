@@ -82,7 +82,7 @@ const getOffersById = async (req, res) => {
             return res.status(400).json({ message: 'El ID es obligatorio' });
         }
 
-        const offersSnapshot = await db.collection('offers').where('companyID', '==', userId).get();
+        const offersSnapshot = await db.collection('offers').where('companyID', '==', id).get();
 
         if (offersSnapshot.empty) {
             return res.status(404).json({ message: 'No se encontraron ofertas para este ID' });
