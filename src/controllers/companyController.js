@@ -2,7 +2,7 @@
  * @module CompanyController
  */
 const { db } = require('../config/firebaseConfig');
-const { get, set } = require('../util/cacheManager');
+
 
 /**
  * Agrega una nueva empresa a la base de datos.
@@ -132,45 +132,6 @@ const  getCompanyInfo = async (req, res) => {
             message: 'Error al obtener la empresa',
             error: error.message,
         });
-    }
-};
-
-/**
- * Verifica el estado de los formularios de la empresa y el stand.
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} res - Objeto de respuesta HTTP.
- */
-const getCompanyStatus = async (req, res) => {
-    const { id } = req.user;
-
-    try {
-      // Verificar en caché si ya existe información del estado
-      const cachedStatus = await get(`company-status-${id}`);
-  
-      if (cachedStatus) {
-        return res.json(cachedStatus);
-      }
-  
-      // Consultar Firestore
-      const companySnapshot = await db.collection('company').where('companyID', '==', id).get();
-      const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
-  
-      if (companySnapshot.empty || standSnapshot.empty) {
-        return res.status(404).json({ error: 'Datos no encontrados.' });
-      }
-  
-      const isAdditionalInfoComplete = !!companySnapshot.docs[0].data().additionalInfoCompleted;
-      const isStandComplete = !!standSnapshot.docs[0].data().standCompleted;
-  
-      const status = { isAdditionalInfoComplete, isStandComplete };
-  
-      // Almacenar en caché el estado durante 30 minutos
-      await set(`company-status-${id}`, status, 1800);
-  
-      res.json(status);
-    } catch (error) {
-      console.error('Error al verificar el estado:', error);
-      res.status(500).json({ error: 'Error en servidor' });
     }
 };
 
