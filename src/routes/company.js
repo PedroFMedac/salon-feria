@@ -63,19 +63,5 @@ router.post('/addStanAndRecep', verifyToken, (req, res, next) => {
  */
 router.get('/getCompany', verifyToken, companyController.getCompanyInfo);
 
-/**
- * Ruta para verificar el estado de los formularios de la empresa.
- * Solo los usuarios autenticados pueden acceder a esta ruta.
- * 
- * @name GET /company/status
- * @function
- * @memberof module:UsersRoutes
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.user - Información del usuario autenticado.
- * @param {string} req.user.id - ID del usuario autenticado.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con el estado de los formularios (stand y adicional), o un mensaje de error si ocurre algún problema.
- */
-router.get('/status', verifyToken, companyController.getCompanyStatus);
 
 module.exports = router;
