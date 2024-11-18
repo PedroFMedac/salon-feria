@@ -53,8 +53,7 @@ router.post('/login', async (req, res) => {
       // Generar token JWT si las credenciales son válidas
       const token = jwt.sign(
         { name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId },
-        process.env.SECRET_KEY,
-        { expiresIn: '1h' }
+        process.env.SECRET_KEY
       );
       return res.json({ token });
     } else {
@@ -69,8 +68,7 @@ router.post('/login', async (req, res) => {
       // Generar token JWT si las credenciales son válidas
       const token = jwt.sign(
         { name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId },
-        process.env.SECRET_KEY,
-        { expiresIn: '1h' }
+        process.env.SECRET_KEY
       );
       return res.json({ token });
     }
