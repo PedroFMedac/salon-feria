@@ -76,13 +76,18 @@ const  getOffersById = async (req, res) => {
     try {
         const { id, rol } = req.user;
 
-        const userId = rol === 'co' ? id : req.body.id;
+        
+
+        const userId = rol === 'co' ? id : req.body.companyID;
+
+        console.log('Datos enviados al backend:', { id: id });
+
 
         if (!userId) {
             return res.status(400).json({ message: 'El ID es obligatorio' });
         }
 
-        const offersSnapshot = await db.collection('offers').where('companyID', '==', userId).get();
+        const offersSnapshot = await db.collection('offers').where('companyID', '==', id).get();
 
         if (offersSnapshot.empty) {
             return res.status(404).json({ message: 'No se encontraron ofertas para este ID' });

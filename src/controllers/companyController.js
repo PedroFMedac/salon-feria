@@ -2,6 +2,7 @@
  * @module CompanyController
  */
 const { db } = require('../config/firebaseConfig');
+const { get, set } = require('../util/cacheManager');
 
 /**
  * Agrega una nueva empresa a la base de datos.
@@ -85,14 +86,14 @@ const addStandAndRecep = async (req, res) => {
             URLRecep,
             URLStand
         };
-        
-        const standRef = db.collection('stand').doc(standID);
-        await standRef.set(newStand); 
 
-        return res.status(200).json({message: 'Stand y Recepcionista guardados correctamente'});
+        const standRef = db.collection('stand').doc(standID);
+        await standRef.set(newStand);
+
+        return res.status(200).json({ message: 'Stand y Recepcionista guardados correctamente' });
     } catch (error) {
         console.error("Error al agregar el stand y el recepcionista: ", error);
-        return res.status(500).json({ message: 'Error interno del servidor'})
+        return res.status(500).json({ message: 'Error interno del servidor' })
     }
 }
 
@@ -109,29 +110,68 @@ const addStandAndRecep = async (req, res) => {
  */
 const  getCompanyInfo = async (req, res) => {
     try {
-      const { id, rol } = req.user;
-  
-      if (rol !== 'co') {
-        return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
-      }
-  
-      const companyQuery = await db.collection('company').where('companyID', '==', id).get();
-  
-      if (companyQuery.empty) {
-        return res.status(404).json({ message: 'Empresa no encontrada' });
-      }
-  
-      const companyDoc = companyQuery.docs[0];
-      const companyData = companyDoc.data();
-  
-      return res.status(200).json(companyData);
-    } catch (error) {
-      console.error('Error al obtener la empresa:', error);
-      return res.status(500).json({
-        message: 'Error al obtener la empresa',
-        error: error.message,
-      });
-    }
-  };
+        const { id, rol } = req.user;
 
-module.exports = { addInfoCompany, addStandAndRecep, getCompanyInfo };
+        if (rol !== 'co') {
+            return res.status(403).json({ message: 'Acceso denegado. No eres una empresa.' });
+        }
+
+        const companyQuery = await db.collection('company').where('companyID', '==', id).get();
+
+        if (companyQuery.empty) {
+            return res.status(404).json({ message: 'Empresa no encontrada' });
+        }
+
+        const companyDoc = companyQuery.docs[0];
+        const companyData = companyDoc.data();
+
+        return res.status(200).json(companyData);
+    } catch (error) {
+        console.error('Error al obtener la informacion adicional de la empresa:', error);
+        return res.status(500).json({
+            message: 'Error al obtener la empresa',
+            error: error.message,
+        });
+    }
+};
+
+/**
+ * Verifica el estado de los formularios de la empresa y el stand.
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ */
+const getCompanyStatus = async (req, res) => {
+    const { id } = req.user;
+
+    try {
+      // Verificar en caché si ya existe información del estado
+      const cachedStatus = await get(`company-status-${id}`);
+  
+      if (cachedStatus) {
+        return res.json(cachedStatus);
+      }
+  
+      // Consultar Firestore
+      const companySnapshot = await db.collection('company').where('companyID', '==', id).get();
+      const standSnapshot = await db.collection('stand').where('companyID', '==', id).get();
+  
+      if (companySnapshot.empty || standSnapshot.empty) {
+        return res.status(404).json({ error: 'Datos no encontrados.' });
+      }
+  
+      const isAdditionalInfoComplete = !!companySnapshot.docs[0].data().additionalInfoCompleted;
+      const isStandComplete = !!standSnapshot.docs[0].data().standCompleted;
+  
+      const status = { isAdditionalInfoComplete, isStandComplete };
+  
+      // Almacenar en caché el estado durante 30 minutos
+      await set(`company-status-${id}`, status, 1800);
+  
+      res.json(status);
+    } catch (error) {
+      console.error('Error al verificar el estado:', error);
+      res.status(500).json({ error: 'Error en servidor' });
+    }
+};
+
+module.exports = { addInfoCompany, addStandAndRecep, getCompanyInfo, getCompanyStatus };

@@ -13,7 +13,7 @@ const userRoutes = require('./routes/users');
 const companyRoutes = require('./routes/company');
 const videoRoutes = require('./routes/video');
 const offersRoutes = require('./routes/offers');
-const errorHandler = require('./middlewares/errorMiddleware');
+const errorMiddleware = require('./middlewares/errorMiddleware');
 
 const app = express();
 
@@ -35,7 +35,7 @@ app.use('/videos', videoRoutes);    // Rutas para videos
 app.use('/offers', offersRoutes);   // Rutas para ofertas
 
 // Middleware de manejo de errores
-app.use(errorHandler); // Usa el middleware de errores personalizado
+app.use(errorMiddleware); // Usa el middleware de errores personalizado
 
 // Configuración del puerto y inicio del servidor
 const PORT = process.env.PORT || 3000;
