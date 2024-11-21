@@ -82,6 +82,6 @@ router.put('/:id', verifyToken, (req, res, next) => {
     next(); // Si el usuario tiene rol de "empresa", se pasa al controlador
 }, offersController.updateOfferById);
 
-router.get('/filter', verifyToken, offersController.searchOffers);
+router.get('/allOffers', verifyToken, offersController.getAllOffers);
 
 module.exports = router;
