@@ -174,4 +174,37 @@ const updateOfferById = async (req, res) => {
     }
 };
 
-module.exports = { addOffers, getOffersById, deleteOfferById, updateOfferById };
+/**
+ * Recupera todas las ofertas de la colección 'offers'.
+ * 
+ * @async
+ * @function getAllOffers
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con las ofertas o un mensaje de error.
+ */
+const getAllOffers = async (req, res) => {
+    try {
+      // Consulta todos los documentos de la colección 'offers'
+      const offersSnapshot = await db.collection('offers').get();
+  
+      // Si no hay documentos, devolver un mensaje
+      if (offersSnapshot.empty) {
+        return res.status(404).json({ message: 'No se encontraron ofertas.' });
+      }
+  
+      // Convertir los documentos en un arreglo de objetos
+      const offers = [];
+      offersSnapshot.forEach(doc => {
+        offers.push({ id: doc.id, ...doc.data() });
+      });
+  
+      // Responder con las ofertas
+      return res.status(200).json(offers);
+    } catch (error) {
+      console.error('Error al recuperar las ofertas:', error);
+      return res.status(500).json({ message: 'Error al recuperar las ofertas', error: error.message });
+    }
+  };
+
+module.exports = { addOffers, getAllOffers, getOffersById, deleteOfferById, updateOfferById };
