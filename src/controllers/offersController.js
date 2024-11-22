@@ -18,7 +18,7 @@ const { db } = require('../config/firebaseConfig');
 const addOffers = async (req, res) => {
     try {
         const { id, rol } = req.user;
-        const { position, workplace_type, location, job_type, description } = req.body;
+        const { position, workplace_type, sector, location, job_type, description } = req.body;
 
         const companyID = rol === 'co' ? id : req.body.companyID;
 
@@ -40,6 +40,7 @@ const addOffers = async (req, res) => {
             location,
             job_type,
             description,
+            sector,
             companyID,
             companyName: companyData.name,
             createdAt: new Date().toISOString()
