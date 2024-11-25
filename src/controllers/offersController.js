@@ -26,6 +26,8 @@ const addOffers = async (req, res) => {
             return res.status(400).json({ message: 'Todos los campos son obligatorios' });
         }
 
+        console.log(companyID);
+
         // Obtener la información de la empresa usando el companyID
         const companySnapshot = await db.collection('company')
             .where('companyID', '==', companyID)
