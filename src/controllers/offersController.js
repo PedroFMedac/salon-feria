@@ -82,7 +82,7 @@ const addOffers = async (req, res) => {
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con las ofertas de la empresa.
  */
-const getOffersById = async (req, res) => {
+const  getOffersById = async (req, res) => {
     try {
         // Determinar el ID según el rol
         const id = req.user.rol === 'admin' ? req.params.id : req.user.id;

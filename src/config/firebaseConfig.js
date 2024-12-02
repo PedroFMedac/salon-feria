@@ -8,7 +8,7 @@ const serviceAccount = require('/etc/secrets/palacio-de-ferias-firebase-adminsdk
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://palacio-de-ferias.firebaseio.com"
-});
+} );
 
 const db = admin.firestore();
 

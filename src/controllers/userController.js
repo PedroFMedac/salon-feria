@@ -5,7 +5,7 @@
  * Define la lógica para manejar las solicitudes relacionadas con los usuarios.
  */
 
-const { admin, db } = require('../config/firebaseConfig');
+const { admin, db } =  require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { uploadFileToDrive } = require('../service/googleDrive');

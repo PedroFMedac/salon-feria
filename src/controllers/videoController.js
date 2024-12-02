@@ -1,7 +1,7 @@
 /**
  * @module VideoController
  */
-const { db } = require('../config/firebaseConfig');
+const { db } =  require('../config/firebaseConfig');
 
 /**
  * Agrega un nuevo video.
