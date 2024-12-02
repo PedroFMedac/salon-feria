@@ -1,84 +1,46 @@
-/**
+/** 
  * @module AuthRoutes
+ * 
+ * Este módulo define las rutas relacionadas con la autenticación.
+ * Incluye rutas para iniciar sesión y cerrar sesión.
  */
 
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const { db } = require('../config/firebaseConfig');
-const bcrypt = require('bcryptjs');
+const authController = require('../controllers/authController');
 
 /**
- * Ruta de autenticación para iniciar sesión.
- * Permite a los usuarios autenticarse utilizando su nombre o correo electrónico y contraseña.
- * Genera un token JWT si las credenciales son correctas.
- * 
- * @async
- * @function /login
+ * @function login
+ * @description Maneja el proceso de inicio de sesión de los usuarios.
+ * Verifica si el usuario existe (por nombre o correo electrónico) y valida su contraseña.
+ * Si es válido, genera un token JWT y lo almacena como cookie.
+ *
  * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.body - Cuerpo de la solicitud que contiene las credenciales.
- * @param {string} req.body.nameOrEmail - Nombre de usuario o correo electrónico del usuario.
+ * @param {string} req.body.nameOrEmail - Nombre o correo electrónico del usuario.
  * @param {string} req.body.password - Contraseña del usuario.
  * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con el token JWT si la autenticación es exitosa, o un mensaje de error si falla.
+ *
+ * @returns {Object} JSON con mensaje de éxito y datos del usuario si las credenciales son válidas.
+ * @throws {401} Si el usuario no existe o la contraseña es inválida.
+ * @throws {500} Si ocurre un error interno del servidor.
  */
-router.post('/login', async (req, res) => {
-  const { nameOrEmail, password } = req.body;
 
-  // Validación de los campos de entrada
-  if (!nameOrEmail || !password) return res.status(400).json({ error: 'Faltan datos.' });
+router.post ('/login', authController.login);
 
-  try {
-    // Busca al usuario tanto por nombre como por email
-    const userQuery = await db.collection('users')
-      .where('name', '==', nameOrEmail)
-      .get();
+/**
+ * @function logout
+ * @description Maneja el proceso de cierre de sesión de los usuarios.
+ * Elimina la cookie que contiene el token JWT.
+ *
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ *
+ * @returns {Object} JSON con un mensaje de éxito si el cierre de sesión es exitoso.
+ * @throws {500} Si ocurre un error interno del servidor.
+ */
 
-    // Si no se encuentra por nombre, buscar por email
-    if (userQuery.empty) {
-      const emailQuery = await db.collection('users')
-        .where('email', '==', nameOrEmail)
-        .get();
+router.post ('/logout', authController.logout);
 
-      // Si no se encuentra ningún documento, retornar error de credenciales
-      if (emailQuery.empty) return res.status(401).json({ error: 'Credenciales incorrectas' });
-      
-      const userDoc = emailQuery.docs[0];
-      const userData = userDoc.data();
-
-      // Comparar contraseñas usando bcrypt
-      const isPasswordValid = await bcrypt.compare(password, userData.password);
-      if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
-      // Generar token JWT si las credenciales son válidas
-      const token = jwt.sign(
-        { name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId },
-        process.env.SECRET_KEY,
-        { expiresIn: '1h' }
-      );
-      return res.json({ token });
-    } else {
-      // Usuario encontrado por nombre
-      const userDoc = userQuery.docs[0];
-      const userData = userDoc.data();
-
-      // Comparar contraseñas usando bcrypt
-      const isPasswordValid = await bcrypt.compare(password, userData.password);
-      if (!isPasswordValid) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
-      // Generar token JWT si las credenciales son válidas
-      const token = jwt.sign(
-        { name: userData.name, id: userDoc.id, rol: userData.rol, standID: userData.standId },
-        process.env.SECRET_KEY,
-        { expiresIn: '1h' }
-      );
-      return res.json({ token });
-    }
-  } catch (error) {
-    // Manejo de errores
-    console.error('Error en login:', error);
-    res.status(500).send('Error en servidor');
-  }
-});
+router.post ('/logging/unity', authController.loggingForUnity);
 
 module.exports = router;

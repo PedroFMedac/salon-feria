@@ -16,47 +16,57 @@ const { db } = require('../config/firebaseConfig');
  * @returns {Object} JSON con mensaje de éxito y ID de la oferta creada.
  */
 const addOffers = async (req, res) => {
+
+    const { position, workplace_type, location, job_type, sector, description } = req.body;
+    const id = req.user.rol === 'admin' ? req.params.id : req.user.id;
+
     try {
-        const { id, rol } = req.user;
-        const { position, workplace_type, location, job_type, description } = req.body;
-
-        const companyID = rol === 'co' ? id : req.body.companyID;
-
+        // Validar los campos obligatorios
         if (!position || !location || !description) {
             return res.status(400).json({ message: 'Todos los campos son obligatorios' });
         }
 
-        // Obtener la información de la empresa usando el companyID
-        const companySnapshot = await db.collection('company')
-            .where('companyID', '==', companyID)
-            .get();
+        // Obtener la información de la empresa usando el ID del usuario
+        const companySnapshot = await db.collection('users').doc(id).get();
 
-        // Obtener los datos del primer documento que coincida (si se espera solo uno)
-        const companyData = companySnapshot.docs[0].data();
+        if (!companySnapshot.exists) {
+            return res.status(404).json({ message: 'No se encontró información de la empresa' });
+        }
 
+        const companyData = companySnapshot.data();
+
+        // Verificar si la empresa tiene un logo
+        if (!companyData.logo) {
+            return res.status(400).json({ message: 'No se encontró un logo para esta empresa' });
+        }
+
+        // Crear la nueva oferta con los datos obtenidos
         const newOffer = {
             position,
-            workplace_type,
+            workplace_type: workplace_type || null, // Valor opcional
             location,
-            job_type,
+            job_type: job_type || null, // Valor opcional
             description,
-            companyID,
-            companyName: companyData.name,
-            createdAt: new Date().toISOString()
+            companyID: id,
+            sector: sector || null, // Valor opcional
+            logo: companyData.logo, // Logo de la empresa
+            companyName: companyData.company, // Nombre de la empresa
+            createdAt: admin.firestore.Timestamp.now(), // Timestamp
         };
 
+        // Guardar la oferta en la colección "offers"
         const offersRef = await db.collection('offers').add(newOffer);
 
         return res.status(201).json({
             message: 'Oferta añadida con éxito',
-            id: offersRef.id
+            id: offersRef.id,
         });
 
     } catch (error) {
         console.error("Error al agregar oferta", error);
         return res.status(500).json({
             message: 'Error al agregar oferta',
-            error: error.message
+            error: error.message,
         });
     }
 };
@@ -74,35 +84,43 @@ const addOffers = async (req, res) => {
  */
 const getOffersById = async (req, res) => {
     try {
-        const { id, rol } = req.user;
+        // Determinar el ID según el rol
+        const id = req.user.rol === 'admin' ? req.params.id : req.user.id;
 
-        const userId = rol === 'co' ? id : req.body.id;
-
-        if (!userId) {
+        if (!id) {
             return res.status(400).json({ message: 'El ID es obligatorio' });
         }
 
-        const offersSnapshot = await db.collection('offers').where('companyID', '==', userId).get();
+        // Buscar las ofertas asociadas al ID
+        const offersSnapshot = await db.collection('offers').where('companyID', '==', id).get();
 
         if (offersSnapshot.empty) {
-            return res.status(404).json({ message: 'No se encontraron ofertas para este ID' });
+            return res.status(200).json({
+                message: 'No se encontraron ofertas para esta compañía',
+                offers: [],
+            });
         }
 
+        // Mapear las ofertas obtenidas
         const offers = offersSnapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data()
+            ...doc.data(),
         }));
 
-        return res.status(200).json(offers);
+        return res.status(200).json({
+            message: 'Ofertas obtenidas con éxito',
+            offers,
+        });
 
     } catch (error) {
         console.error("Error al obtener ofertas:", error);
         return res.status(500).json({
             message: 'Error al obtener ofertas',
-            error: error.message
+            error: error.message,
         });
     }
 };
+
 
 /**
  * Elimina una oferta de trabajo por ID.
@@ -145,7 +163,7 @@ const deleteOfferById = async (req, res) => {
 const updateOfferById = async (req, res) => {
     try {
         const offerId = req.params.id;
-        const { position, workplace_type, location, job_type, description } = req.body;
+        const { position, workplace_type, location, job_type, sector, description } = req.body;
 
         const updatedData = {
             ...(position && { position }),
@@ -153,6 +171,7 @@ const updateOfferById = async (req, res) => {
             ...(location && { location }),
             ...(job_type && { job_type }),
             ...(description && { description }),
+            ...(sector && { sector }),
             updatedAt: new Date().toISOString()
         };
 
@@ -169,4 +188,101 @@ const updateOfferById = async (req, res) => {
     }
 };
 
-module.exports = { addOffers, getOffersById, deleteOfferById, updateOfferById };
+/**
+ * Recupera todas las ofertas de la colección 'offers'.
+ * 
+ * @async
+ * @function getAllOffers
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con las ofertas o un mensaje de error.
+ */
+const getAllOffers = async (req, res) => {
+    try {
+        // Consulta todos los documentos de la colección 'offers'
+        const offersSnapshot = await db.collection('offers').get();
+
+        // Si no hay documentos, devolver un mensaje
+        if (offersSnapshot.empty) {
+            return res.status(404).json({ message: 'No se encontraron ofertas.' });
+        }
+
+        // Convertir los documentos en un arreglo de objetos
+        const offers = [];
+        offersSnapshot.forEach(doc => {
+            offers.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Responder con las ofertas
+        return res.status(200).json(offers);
+    } catch (error) {
+        console.error('Error al recuperar las ofertas:', error);
+        return res.status(500).json({ message: 'Error al recuperar las ofertas', error: error.message });
+    }
+};
+
+const searchOffers = async (req, res) => {
+    try {
+        const {
+            keyword, // palabra clave para buscar en `description` y `position`
+            location,
+            job_type,
+            workplace_type,
+            company,
+            sector,
+        } = req.query; // Recibir parámetros como query strings.
+
+        let query = db.collection('offers'); // Iniciar una referencia base de la colección.
+
+        // Agregar filtros a la consulta según los parámetros presentes.
+        if (location) {
+            query = query.where('location', '==', location);
+        }
+
+        if (job_type) {
+            query = query.where('job_type', '==', job_type);
+        }
+
+        if (workplace_type) {
+            query = query.where('workplace_type', '==', workplace_type);
+        }
+
+        if (company) {
+            query = query.where('companyName', '==', company);
+        }
+
+        if (sector) {
+            query = query.where('sector', '==', sector);
+        }
+
+        // Ejecutar la consulta.
+        const snapshot = await query.get();
+
+        if (snapshot.empty) {
+            return res.status(404).json({ message: 'No se encontraron ofertas.' });
+        }
+
+        let offers = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        // Filtrar por palabra clave en `description` y `position` (este filtrado se hace en el backend porque Firestore no soporta "OR" o búsquedas parciales directamente).
+        if (keyword) {
+            const lowerKeyword = keyword.toLowerCase();
+            offers = offers.filter((offer) =>
+                offer.description.toLowerCase().includes(lowerKeyword) ||
+                offer.position.toLowerCase().includes(lowerKeyword)
+            );
+        }
+
+        // Enviar las ofertas filtradas.
+        return res.status(200).json(offers);
+    } catch (error) {
+        console.error('Error al buscar ofertas:', error);
+        return res.status(500).json({ message: 'Error al buscar ofertas.', error: error.message });
+    }
+};
+
+
+module.exports = { addOffers, getOffersById, deleteOfferById, updateOfferById, getAllOffers, searchOffers };

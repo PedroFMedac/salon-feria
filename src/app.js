@@ -1,44 +1,36 @@
-/**
- * @file app.js - Configuración principal de la aplicación.
- * Configura el servidor Express, establece las rutas y el middleware de errores.
- */
 
 const express = require('express');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
-const { db } = require('./config/firebaseConfig');
 
-// Importar rutas
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const companyRoutes = require('./routes/company');
-const videoRoutes = require('./routes/video');
-const offersRoutes = require('./routes/offers');
-const errorHandler = require('./middlewares/errorMiddleware');
+
+const authRoutes = require ('./routes/auth');
+const usersRoutes = require('./routes/users');
+const designRoutes = require ('./routes/design');
+const fileRoutes = require('./routes/file');
+const informationRoutes = require ('./routes/information');
+const offersRoutes = require ('./routes/offers');
+const videoRoutes = require ('./routes/video');
 
 const app = express();
 
-// Middleware para habilitar CORS y parseo de JSON
-app.use(cors());
+app.use(cookieParser());
+app.use(cors({
+    origin: ['http://localhost:4200','http://localhost:3000'], // Dirección de tu frontend
+    credentials: true // Necesario si trabajas con cookies
+}));
 app.use(express.json());
 
-/**
- * Configuración de rutas de la aplicación.
- * 
- * @name Rutas
- * @memberof app.js
- * @description Define las rutas de la aplicación, cada una asignada a un archivo específico en la carpeta de rutas.
- */
-app.use('/auth', authRoutes);      // Rutas de autenticación
-app.use('/users', userRoutes);      // Rutas para usuarios
-app.use('/company', companyRoutes); // Rutas para empresas
-app.use('/videos', videoRoutes);    // Rutas para videos
-app.use('/offers', offersRoutes);   // Rutas para ofertas
+app.use('/auth', authRoutes);
+app.use('/users', usersRoutes);
+app.use('/design', designRoutes);
+app.use('/file', fileRoutes);
+app.use('/information', informationRoutes);
+app.use('/offers', offersRoutes);
+app.use('/video', videoRoutes);
 
-// Middleware de manejo de errores
-app.use(errorHandler); // Usa el middleware de errores personalizado
-
-// Configuración del puerto y inicio del servidor
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+

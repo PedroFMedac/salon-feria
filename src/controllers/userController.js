@@ -1,216 +1,557 @@
 /**
- * @module UserController
+ * 
+ * @module userController 
+ * Controlador de usuarios.
+ * Define la lógica para manejar las solicitudes relacionadas con los usuarios.
  */
 
 const { admin, db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+const { uploadFileToDrive } = require('../service/googleDrive');
+const fs = require('fs');
+const { doubleclickbidmanager } = require('googleapis/build/src/apis/doubleclickbidmanager');
+
 
 /**
- * Crea un nuevo usuario en la base de datos.
- * Valida los datos de entrada, verifica que el correo no esté en uso,
- * hashea la contraseña y guarda los datos del usuario en Firestore.
+ * Registra un nuevo usuario en el sistema.
  * 
- * @async
- * @function createUser
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.body - Cuerpo de la solicitud que contiene los datos del usuario.
+ * @param {Object} req - Objeto de solicitud de Express.
  * @param {string} req.body.name - Nombre del usuario.
- * @param {string} req.body.email - Correo electrónico del usuario (único).
+ * @param {string} req.body.email - Correo electrónico del usuario.
  * @param {string} req.body.password - Contraseña del usuario.
- * @param {string} req.body.rol - Rol del usuario ('admin', 'co' o 'visitor').
- * @param {string} [req.body.company] - Nombre de la empresa (requerido si el rol es 'co').
- * @param {string} [req.body.cif] - CIF de la empresa (requerido si el rol es 'co').
- * @param {string} [req.body.dni] - DNI del usuario (requerido si el rol es 'visitor').
- * @param {string} [req.body.studies] - Estudios del usuario (requerido si el rol es 'visitor').
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con un mensaje de éxito y el ID del usuario creado, o un mensaje de error.
+ * @param {string} req.body.rol - Rol del usuario ('admin', 'co', 'visitor').
+ * @param {file} req.files.file - Archivo opcional (imagen o logo).
+ * @param {file} req.files.cv - Archivo opcional (currículum).
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con mensaje y ID del usuario registrado.
  */
-const createUser = async (req, res) => {
-  const { name, email, password, rol, company, cif, dni, studies } = req.body;
 
-  // Validar que todos los campos esenciales estén presentes
-  if (!name || !email || !password || !rol) {
-    return res.status(400).json({ error: 'Faltan datos.' });
-  }
-
-  // Validar que el rol sea uno de los permitidos
-  const rolesPermitidos = ['admin', 'co', 'visitor'];
-  if (!rolesPermitidos.includes(rol)) {
-    return res.status(400).json({ error: 'El rol no es válido.' });
-  }
-
-  try {
-    // Verificar que el correo no esté en uso
-    const usersSnapshot = await db.collection('users').where('email', '==', email).get();
-    if (!usersSnapshot.empty) {
-      return res.status(400).json({ error: 'El correo ya está en uso.' });
+const register = async (req, res) => {
+    const { name, email, password, rol, phone, subname, studies, cif, dni } = req.body;
+    const fileUpload = req.files?.file ? req.files.file[0] : null; // Asegúrate de que req.files.file[0] exista
+    const cvUpload = req.files?.cv ? req.files.cv[0] : null;
+    console.log('req.files:', req.files);
+    if (!name || !email || !password || !rol) {
+        return res.status(400).json({ error: 'invalid_request', message: 'Invalid request.' });
     }
 
-    // Hashear la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Preparar el objeto de datos del usuario basado en el rol
-    let userData = {
-      name,
-      email,
-      password: hashedPassword,
-      rol,
-      createdAt: admin.firestore.Timestamp.now() // Usando el Timestamp de Firestore
-    };
-
-    // Si el rol es 'co', añadimos los campos de empresa, stand y cif
-    if (rol === 'co') {
-      if (!company || !cif) {
-        return res.status(400).json({ error: 'Faltan campos de empresa y/o CIF para el CO.' });
-      }
-      userData.company = company;
-      userData.standId = uuidv4();
-      userData.cif = cif;
+    const permitionRol = ['admin', 'co', 'visitor'];
+    if (!permitionRol.includes(rol)) {
+        return res.status(400).json({ error: 'invalid_rol', message: 'Invalid rol' });
     }
 
-    // Si el rol es 'visitor', añadimos los campos de dni y estudios
-    if (rol === 'visitor') {
-      if (!dni || !studies) {
-        return res.status(400).json({ error: 'Faltan campos de DNI y/o estudios para el visitante.' });
-      }
-      userData.dni = dni;
-      userData.studies = studies;
+    try {
+
+        const [usersEmailSnapshot, usersNameSnapshot] = await Promise.all([
+            db.collection('users').where('email', '==', email).get(),
+            db.collection('users').where('name', '==', name).get()
+        ]);
+
+        if (!usersEmailSnapshot.empty) {
+            return res.status(400).json({ error: 'invalid_email', message: 'Email already exists.' });
+        }
+
+        if (!usersNameSnapshot.empty) {
+            return res.status(400).json({ error: 'invalid_name', message: 'Name already exists.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        /*
+        // Subir la imagen y el documento a Firebase Storage
+        if (fileUpload) {
+            try {
+                const fileRef = bucket.file(`profile_images/${Date.now()}_${fileUpload.name}`);
+                await fileRef.save(fileUpload.data, { contentType: fileUpload.mimetype });
+                const signedUrl = await fileRef.getSignedUrl({ action: 'read', expires: '03-01-2500' }); // URL pública
+                fileUrl = signedUrl[0];
+
+                // Limpia el archivo temporal después de subirlo
+                fs.unlink(fileUpload.path, (err) => {
+                    if (err) console.error('Error eliminando archivo temporal:', err);
+                });
+            } catch (error) {
+                console.error('Error subiendo archivo a Firebase:', error);
+            }
+        }
+
+        if (cvUpload) {
+            try {
+                const cvRef = bucket.file(`cv_files/${Date.now()}_${cvUpload.name}`);
+                await cvRef.save(cvUpload.data, { contentType: cvUpload.mimetype });
+                const signedUrl = await cvRef.getSignedUrl({ action: 'read', expires: '03-01-2500' }); // URL pública
+                cvUrl = signedUrl[0];
+
+                // Limpia el archivo temporal después de subirlo
+                fs.unlink(cvUpload.path, (err) => {
+                    if (err) console.error('Error eliminando archivo temporal:', err);
+                });
+            } catch (error) {
+                console.error('Error subiendo CV a Firebase:', error);
+            }
+        }*/
+
+
+        // Subir archivos a Google Drive
+        let fileUrl = null;
+        let cvUrl = null;
+
+        if (fileUpload) {
+            const fileResponse = await uploadFileToDrive(fileUpload, 'profileImages'); // Subir imagen
+            fileUrl = fileResponse.webViewLink;
+
+            // Limpia el archivo temporal después de subirlo
+            fs.unlink(fileUpload.path, (err) => {
+                if (err) console.error('Error eliminando archivo temporal:', err);
+            });
+        }
+
+        if (cvUpload) {
+            const cvResponse = await uploadFileToDrive(cvUpload, 'cvFiles'); // Subir CV
+            cvUrl = cvResponse.webViewLink;
+
+            // Limpia el archivo temporal después de subirlo
+            fs.unlink(cvUpload.path, (err) => {
+                if (err) console.error('Error eliminando archivo temporal:', err);
+            });
+        }
+
+
+        let userData = {
+            name: name,
+            email: email,
+            rol: rol,
+            password: hashedPassword,
+
+            createdAt: admin.firestore.Timestamp.now()
+        }
+
+        if (rol === 'co') {
+            if (!cif) {
+                return res.status(400).json({ error: 'invalid_cif', message: 'CIF is required for Company.' });
+            }
+            userData.cif = cif;
+            userData.logo = fileUrl;
+            userData.design = false;
+            userData.information = false;
+        }
+
+        if (rol === 'visitor') {
+            if (!dni || !studies) {
+                return res.status(400).json({ error: 'invalid_dni', message: 'DNI and studies are required for Visitor.' });
+            }
+            userData.dni = dni;
+            userData.subname = subname;
+            userData.studies = studies;
+            userData.image = fileUrl;
+            userData.cv = cvUrl;
+            userData.phone = phone;
+        }
+
+        const userRef = await db.collection('users').add(userData);
+        res.status(201).json({ message: 'User created successfully', id: userRef.id });
+    } catch (error) {
+
+        res.status(500).json({ error: 'Failed to create user' })
     }
-
-    // Crear el documento en Firestore con un ID generado automáticamente
-    const userRef = await db.collection('users').add(userData);
-
-    // Devolver respuesta de éxito con el ID del usuario
-    res.status(201).json({ message: 'Usuario creado exitosamente.', id: userRef.id });
-    
-  } catch (error) {
-    console.error('Error al crear usuario:', error);
-    res.status(500).json({ error: 'Error al crear el usuario.' });
-  }
 };
 
 /**
- * Obtiene todos los usuarios de la base de datos.
+ * Obtiene todos los usuarios con el rol "co" (empresa).
  * 
- * @async
- * @function getAllUsers
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con una lista de todos los usuarios o un mensaje de error.
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con una lista de empresas.
  */
+
+const getAllCompany = async (req, res) => {
+    try {
+        // Consultar usuarios con rol "co"
+        const companyDoc = await db.collection('users').where('rol', '==', 'co').get();
+
+        if (companyDoc.empty) {
+            return res.status(404).json({ message: 'No companies found' });
+        }
+
+        // Mapear los datos de las empresas
+        const companies = companyDoc.docs.map(doc => {
+            const data = doc.data();
+            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña
+            return {
+                id: doc.id, // Incluye el ID del documento
+                ...filteredData
+            };
+        });
+
+        res.status(200).json({ companies });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get companies' });
+    }
+};
+
+/**
+ * Obtiene todos los usuarios con el rol "visitor" (visitante).
+ * 
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con una lista de visitantes.
+ */
+
+const getAllVisitor = async (req, res) => {
+    try {
+        // Consultar usuarios con rol "visitor"
+        const visitorDoc = await db.collection('users').where('rol', '==', 'visitor').get();
+
+        if (visitorDoc.empty) {
+            return res.status(404).json({ message: 'No visitors found' });
+        }
+
+        // Mapear los datos de los visitantes
+        const visitors = visitorDoc.docs.map(doc => {
+            const data = doc.data();
+            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña, createdAt y rol
+            return {
+                id: doc.id, // Incluye el ID del documento
+                ...filteredData
+            };
+        });
+
+        res.status(200).json({ visitors });
+    } catch (error) {
+        console.error('Error fetching visitors:', error);
+        res.status(500).json({ error: 'Failed to get visitors' });
+    }
+};
+
+/**
+ * Obtiene todos los usuarios con el rol "admin".
+ * 
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con una lista de administradores.
+ */
+
+const getAllAdmin = async (req, res) => {
+    try {
+        // Consultar usuarios con rol "admin"
+        const adminDoc = await db.collection('users').where('rol', '==', 'admin').get();
+
+        if (adminDoc.empty) {
+            return res.status(404).json({ message: 'No admins found' });
+        }
+
+        // Mapear los datos de los administradores
+        const admins = adminDoc.docs.map(doc => {
+            const data = doc.data();
+            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña, createdAt y rol
+            return {
+                id: doc.id, // Incluye el ID del documento
+                ...filteredData
+            };
+        });
+
+        res.status(200).json({ admins });
+    } catch (error) {
+        console.error('Error fetching admins:', error);
+        res.status(500).json({ error: 'Failed to get admins' });
+    }
+};
+
+/**
+ * Obtiene todos los usuarios registrados en el sistema.
+ * 
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con una lista de usuarios.
+ */
+
 const getAllUsers = async (req, res) => {
-  try {
-    const usersRef = admin.firestore().collection('users');
-    const snapshot = await usersRef.get();
+    try {
+        // Consultar usuarios
+        const userDoc = await db.collection('users').get();
 
-    if (snapshot.empty) {
-      return res.status(404).json({ message: 'No se encontraron usuarios' });
+        if (userDoc.empty) {
+            return res.status(404).json({ message: 'No users found' });
+        }
+
+        // Mapear los datos
+        const users = userDoc.docs.map(doc => {
+            const data = doc.data();
+            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña, createdAt y rol
+            return {
+                id: doc.id, // Incluye el ID del documento
+                ...filteredData
+            };
+        });
+
+        res.status(200).json({ users });
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Failed to get users' });
     }
-
-    const users = [];
-    snapshot.forEach(doc => {
-      users.push({ id: doc.id, ...doc.data() });
-    });
-
-    res.status(200).json(users);
-  } catch (error) {
-    console.error('Error obteniendo usuarios:', error);
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
-  }
 };
 
 /**
- * Obtiene un usuario por su ID.
+ * Obtiene los datos de un usuario específico por su ID.
  * 
- * @async
- * @function getUserById
- * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req - Objeto de solicitud de Express.
  * @param {string} req.params.id - ID del usuario a obtener.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con los datos del usuario o un mensaje de error.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con los datos del usuario.
  */
+
 const getUserById = async (req, res) => {
-  const { id } = req.params;
+    const companyID = req.user.rol === 'co' ? req.user.id : req.params.id;
 
-  try {
-    // Buscar el documento del usuario por su ID
-    const userDoc = await admin.firestore().collection('users').doc(id).get();
+    try {
+        const userDoc = await db.collection('users').doc(companyID).get();
 
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const userData = userDoc.data();
+        const { password, ...filteredData } = userData; // Excluir contraseña
+
+        res.status(200).json({ user: { id: userDoc.id, ...filteredData } });
+    } catch (error) {
+        console.error('Error fetching user by ID:', error);
+        res.status(500).json({ error: 'Failed to get user by ID' });
     }
-
-    const userData = userDoc.data();
-    res.status(200).json(userData);
-  } catch (error) {
-    console.error('Error obteniendo el usuario por ID:', error);
-    res.status(500).json({ error: 'Error obteniendo el usuario' });
-  }
 };
 
 /**
- * Actualiza los datos de un usuario.
+ * Actualiza los datos de un usuario específico.
  * 
- * @async
- * @function updateUser
- * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req - Objeto de solicitud de Express.
  * @param {string} req.params.id - ID del usuario a actualizar.
- * @param {Object} req.body - Datos a actualizar en el usuario.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con mensaje de éxito o de error.
+ * @param {string} req.body.name - Nuevo nombre del usuario (opcional).
+ * @param {string} req.body.email - Nuevo correo electrónico del usuario (opcional).
+ * @param {string} req.body.password - Nueva contraseña del usuario (opcional).
+ * @param {string} req.body.rol - Nuevo rol del usuario (opcional).
+ * @param {string} req.body.phone - Nuevo teléfono del usuario (opcional).
+ * @param {string} req.body.subname - Nuevo subnombre del usuario (opcional).
+ * @param {string} req.body.studies - Nuevos estudios del usuario (opcional).
+ * @param {string} req.body.cif - Nuevo CIF del usuario (solo para empresas).
+ * @param {string} req.body.dni - Nuevo DNI del usuario (solo para visitantes).
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con mensaje de éxito.
  */
+
 const updateUser = async (req, res) => {
-  const { id } = req.params;
-  const updatedData = req.body;
+    const { id } = req.params; // Obtén el ID de los parámetros
+    const { name, email, password, rol, phone, subname, studies, cif, dni } = req.body;
 
-  try {
-    const userRef = admin.firestore().collection('users').doc(id);
+    try {
+        // Obtener referencia del usuario
+        const userRef = db.collection('users').doc(id);
+        const userSnapshot = await userRef.get();
 
-    // Verificar si el usuario existe
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+        if (!userSnapshot.exists) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Actualizar campos dinámicamente
+        let userData = {};
+
+        if (name) userData.name = name;
+        if (email) userData.email = email;
+        if (rol) userData.rol = rol;
+
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10); // Hashear nueva contraseña
+            userData.password = hashedPassword;
+        }
+
+        if (rol === 'co') {
+            if (!cif) {
+                return res.status(400).json({ error: 'invalid_cif', message: 'CIF is required for Company.' });
+            }
+            userData.cif = cif;
+        }
+
+        if (rol === 'visitor') {
+            if (!dni || !studies) {
+                return res.status(400).json({ error: 'invalid_dni', message: 'DNI and studies are required for Visitor.' });
+            }
+            userData.dni = dni;
+            userData.subname = subname;
+            userData.studies = studies;
+            userData.phone = phone;
+        }
+
+        // Actualizar usuario en Firestore
+        await userRef.update(userData);
+
+        res.status(200).json({ message: 'User updated successfully', id });
+    } catch (error) {
+        console.error('Error updating user:', error);
+        res.status(500).json({ error: 'Failed to update user' });
     }
-
-    // Actualizar el usuario con los nuevos datos
-    await userRef.update(updatedData);
-    res.status(200).json({ message: 'Usuario actualizado exitosamente' });
-  } catch (error) {
-    console.error('Error actualizando usuario:', error);
-    res.status(500).json({ error: 'Error actualizando el usuario' });
-  }
 };
 
 /**
- * Elimina un usuario por su ID.
+ * Elimina un usuario específico.
  * 
- * @async
- * @function deleteUser
- * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req - Objeto de solicitud de Express.
  * @param {string} req.params.id - ID del usuario a eliminar.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con mensaje de éxito o de error.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con mensaje de éxito o error.
  */
-const deleteUser = async (req, res) => {
-  const { id } = req.params;
 
-  try {
-    const userRef = admin.firestore().collection('users').doc(id);
+const deleterUser = async (req, res) => {
+    const { id } = req.params; // Accede directamente al ID
 
-    // Verificar si el usuario existe
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+    try {
+        const userRef = db.collection('users').doc(id);
+        const userSnapshot = await userRef.get();
+
+        // Verificar si el usuario existe
+        if (!userSnapshot.exists) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Eliminar el usuario
+        await userRef.delete();
+
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({ error: 'Failed to delete user' });
     }
-
-    // Eliminar el documento del usuario
-    await userRef.delete();
-    res.status(200).json({ message: 'Usuario eliminado exitosamente' });
-  } catch (error) {
-    console.error('Error eliminando usuario:', error);
-    res.status(500).json({ error: 'Error eliminando el usuario' });
-  }
 };
 
-module.exports = { getAllUsers, createUser, deleteUser, updateUser, getUserById };
+/**
+ * Obtiene todos los usuarios con rol "co" y sus datos relacionados.
+ * 
+ * Este método consulta la colección `users` para obtener los usuarios con el rol "co".
+ * Luego, recupera datos relacionados de las colecciones `offers`, `video`, `company` y `design`.
+ * También incluye información de `stand`, `model` y `files` para el diseño, si está disponible.
+ * 
+ * @async
+ * @function getCompanyAll
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} Respuesta JSON con una lista de usuarios y sus datos relacionados.
+ * 
+ * */
+
+const getCompanyAll = async (req, res) => {
+    try {
+        const userSnapshot = await db.collection('users').where('rol', '==', 'co').get();
+
+        if (userSnapshot.empty) {
+            return res.status(404).json({ message: 'No hay empresas' });
+        }
+        const users = userSnapshot.docs.map(doc => {
+            const data = doc.data();
+            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña
+            return {
+                id: doc.id, // Incluye el ID del documento
+                ...filteredData
+            };
+        });
+
+        const results = await Promise.all(
+            users.map(async (user) => {
+                // Buscar documentos relacionados en otras colecciones
+                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot] = await Promise.all([
+                    db.collection('offers').where('companyID', '==', user.id).get(),
+                    db.collection('video').where('companyID', '==', user.id).get(),
+                    db.collection('company').where('companyID', '==', user.id).get(),
+                    db.collection('design').where('companyID', '==', user.id).get(),
+                ]);
+
+                // Mapear resultados de las colecciones relacionadas
+                const offers = offersSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const {companyID, createdAt, ...filtaredOffersData} = data;
+                    return {
+                        id: doc.id,
+                        ...filtaredOffersData
+                        };
+                });
+                const videos = videosSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const {companyID, ...filtaredVideoData} = data;
+                    return {
+                        id: doc.id,
+                        ...filtaredVideoData
+                        };
+                });
+                const companies = companySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const {companyID, ...filtaredCompaniesData} = data;
+                    return {
+                        id: doc.id,
+                        ...filtaredCompaniesData
+                        };
+                });
+
+                let designData = null;
+                if (!designSnapshot.empty) {
+                    const designDoc = designSnapshot.docs[0];
+                    const designDetails = designDoc.data();
+                    const { standID, modelID, fileID,companyID, createdAt, ...filteredDesign } = designDetails;
+
+                    // Obtener datos del stand, modelo y archivos relacionados
+                    const [standSnapshot, modelSnapshot, fileSnapshot] = await Promise.all([
+                        standID ? db.collection('stand').doc(standID).get() : null,
+                        modelID ? db.collection('model').doc(modelID).get() : null,
+                        fileID ? db.collection('files').doc(fileID).get() : null,
+                    ]);
+
+                    const standData = standSnapshot?.exists
+                    ? (() => {
+                        const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir `stand_config`
+                        return { id: standSnapshot.id, ...filteredData };
+                    })()
+                    : null;
+                
+                const modelData = modelSnapshot?.exists
+                    ? (() => {
+                        const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
+                        return { id: modelSnapshot.id, ...filteredData };
+                    })()
+                    : null;
+                
+                const fileData = fileSnapshot?.exists
+                    ? (() => {
+                        const { companyID, createdAt, ...filteredData } = fileSnapshot.data(); // Puedes aplicar otro filtro aquí si es necesario
+                        return { id: fileSnapshot.id, ...filteredData };
+                    })()
+                    : null;
+
+                    designData = {
+                        ...filteredDesign,
+                        stand: standData,
+                        model: modelData,
+                        files: fileData,
+                    };
+                }
+
+                return {
+                    user, // Información del usuario
+                    relatedData: {
+                        offers,
+                        videos,
+                        companies,
+                        design: designData,
+                    },
+                };
+            })
+        );
+
+        return res.status(200).json(results);
+    } catch (error) {
+
+        console.error('Error al obtener usuarios con rol "co":', error);
+        return res.status(500).json({
+            message: 'Error al obtener usuarios con rol "co".',
+            error: error.message,
+        });
+    }
+};
+
+module.exports = { register, getAllCompany, getAllVisitor, getAllAdmin, getAllUsers, getUserById, updateUser, deleterUser, getCompanyAll };

@@ -1,52 +1,79 @@
 /**
- * @module UsersRoutes
+ * @module VideoRoutes
  */
-
 const express = require('express');
 const router = express.Router();
-const { verifyToken } = require('../middlewares/authMiddleware.js');
-const videoController = require('../controllers/videoController.js');
+const videoController = require('../controllers/videoController');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
 /**
- * Ruta para agregar un nuevo video.
- * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
+ * Ruta para agregar un video.
  * 
- * @name POST /
+ * @name POST /video/add/:id?
  * @function
- * @memberof module:UsersRoutes
+ * @memberof module:VideoRoutes
+ * @param {string} [id] - (Opcional) ID de la empresa para los administradores.
  * @param {Object} req - Objeto de solicitud HTTP.
  * @param {Object} req.user - Información del usuario autenticado.
- * @param {string} req.user.rol - Rol del usuario autenticado.
+ * @param {string} req.body.url - URL del video a agregar.
  * @param {Object} res - Objeto de respuesta HTTP.
- * @param {Function} next - Función para pasar al siguiente middleware.
- * @returns {Object} JSON con un mensaje de éxito si el video es agregado, o un mensaje de error en caso de acceso denegado.
+ * @returns {Object} JSON con mensaje de éxito y las URLs actualizadas o la creación de un nuevo documento.
+ * @throws {403} Acceso denegado si el rol es 'visitor'.
+ * @throws {400} Si la URL del video ya existe en el array o no se proporciona.
  */
-router.post('/', verifyToken, (req, res, next) => {
-    if (req.user.rol !== 'co') {
-        return res.status(403).json({ error: 'Acceso denegado' });
+router.post('/add/:id?', verifyToken, (req, res, next) => {
+    const { rol } = req.user;
+
+    if (rol === 'visitor') {
+        return res.status(403).json({ error: 'Access denied: Visitors cannot add videos.' });
     }
-    next(); // Permite la adición de video si el usuario tiene rol "co"
+    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied: Companies cannot add videos for other companies.' });
+    }
+    next();
 }, videoController.addVideo);
 
 /**
- * Ruta para obtener los videos de la empresa.
- * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
+ * Ruta para obtener los videos de una empresa por ID.
  * 
- * @name GET /
+ * @name GET /video/company/:id?
  * @function
- * @memberof module:UsersRoutes
+ * @memberof module:VideoRoutes
+ * @param {string} [id] - (Opcional) ID de la empresa para los administradores.
  * @param {Object} req - Objeto de solicitud HTTP.
  * @param {Object} req.user - Información del usuario autenticado.
- * @param {string} req.user.rol - Rol del usuario autenticado.
  * @param {Object} res - Objeto de respuesta HTTP.
- * @param {Function} next - Función para pasar al siguiente middleware.
- * @returns {Object} JSON con los videos de la empresa, o un mensaje de error en caso de acceso denegado.
+ * @returns {Object} JSON con los videos asociados a la empresa.
+ * @throws {403} Acceso denegado si el rol es 'visitor'.
+ * @throws {404} Si no se encuentran videos para la empresa especificada.
  */
-router.get('/', verifyToken, (req, res, next) => {
-    if (req.user.rol !== 'co') {
-        return res.status(403).json({ error: 'Acceso denegado' });
+router.get('/company/:id?', verifyToken, videoController.getVideosByCompanyID);
+
+/**
+ * Ruta para eliminar una URL de video del array.
+ * 
+ * @name DELETE /video/delete/:id?
+ * @function
+ * @memberof module:VideoRoutes
+ * @param {string} [id] - (Opcional) ID de la empresa para los administradores.
+ * @param {Object} req - Objeto de solicitud HTTP.
+ * @param {Object} req.user - Información del usuario autenticado.
+ * @param {string} req.body.url - URL del video a eliminar.
+ * @param {Object} res - Objeto de respuesta HTTP.
+ * @returns {Object} JSON con mensaje de éxito y la URL eliminada.
+ * @throws {403} Acceso denegado si el rol es 'visitor'.
+ * @throws {404} Si no se encuentra la empresa o la URL especificada.
+ */
+router.delete('/delete/:id?', verifyToken, (req, res, next) => {
+    const { rol } = req.user;
+
+    if (rol === 'visitor') {
+        return res.status(403).json({ error: 'Access denied: Visitors cannot delete video URLs.' });
     }
-    next(); // Permite la obtención de videos si el usuario tiene rol "co"
-}, videoController.getVideo);
+    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied: Companies cannot delete videos for other companies.' });
+    }
+    next();
+}, videoController.deleteVideoUrl);
 
 module.exports = router;

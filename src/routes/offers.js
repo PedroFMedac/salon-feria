@@ -1,85 +1,107 @@
 /**
  * @module OffersRoutes
  */
-
 const express = require('express');
 const router = express.Router();
-const { verifyToken } = require('../middlewares/authMiddleware.js');
-const offersController = require('../controllers/offersController.js');
+const offersController = require('../controllers/offersController');
+const { verifyToken } = require('../middlewares/authMiddleware');
 
 /**
- * Ruta para crear una nueva oferta de trabajo.
- * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
- * 
- * @name POST /
- * @function
- * @memberof module:OffersRoutes
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.user - Información del usuario autenticado.
- * @param {string} req.user.rol - Rol del usuario.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @param {Function} next - Función para pasar al siguiente middleware.
- * @returns {Object} JSON con un mensaje de éxito si se crea la oferta, o un mensaje de error en caso de acceso denegado.
+ * @route POST /add/:id?
+ * @description Añade una nueva oferta de trabajo.
+ * @access Empresas (propias) y administradores.
+ * @param {string} [id] - ID de la empresa (solo administradores pueden especificarlo).
+ * @middleware verifyToken - Verifica el token JWT para autenticación.
+ * @middleware next - Valida el acceso según el rol del usuario.
+ * @returns {Object} JSON con el mensaje de éxito y el ID de la oferta creada.
  */
-router.post('/', verifyToken, (req, res, next) => {
-    if (req.user.rol !== 'co') {
-        return res.status(403).json({ error: 'Acceso denegado' });
+router.post('/add/:id?', verifyToken, (req, res, next) => {
+    const { rol } = req.user;
+
+    if (rol === 'visitor') {
+        return res.status(403).json({ error: 'Access denied: Visitors cannot add offers.' });
     }
-    next(); // Si el usuario tiene rol de "empresa", se pasa al controlador
+
+    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied: Companies cannot add offers for other companies.' });
+    }
+
+    next();
 }, offersController.addOffers);
 
 /**
- * Ruta para obtener las ofertas de trabajo por ID de la empresa.
- * Solo los usuarios autenticados pueden acceder a esta ruta.
- * 
- * @name GET /by-id
- * @function
- * @memberof module:OffersRoutes
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {Object} req.user - Información del usuario autenticado.
- * @param {string} req.user.rol - Rol del usuario.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con las ofertas de trabajo de la empresa o un mensaje de error si ocurre algún problema.
+ * @route GET /company/:id?
+ * @description Obtiene las ofertas de una empresa específica.
+ * @access Empresas (propias) y administradores.
+ * @param {string} [id] - ID de la empresa (solo administradores pueden especificarlo).
+ * @middleware verifyToken - Verifica el token JWT para autenticación.
+ * @middleware next - Valida el acceso según el rol del usuario.
+ * @returns {Object} JSON con las ofertas de la empresa o un mensaje de error.
  */
-router.get('/by-id', verifyToken, offersController.getOffersById);
+router.get('/company/:id?', verifyToken, offersController.getOffersById);
 
 /**
- * Ruta para eliminar una oferta de trabajo por ID.
- * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
- * 
- * @name DELETE /:id
- * @function
- * @memberof module:OffersRoutes
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {string} req.params.id - ID de la oferta a eliminar.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con un mensaje de éxito si se elimina la oferta, o un mensaje de error en caso de acceso denegado.
+ * @route DELETE /delete/:id
+ * @description Elimina una oferta de trabajo por su ID.
+ * @access Empresas (propias) y administradores.
+ * @param {string} id - ID de la oferta a eliminar.
+ * @middleware verifyToken - Verifica el token JWT para autenticación.
+ * @middleware next - Valida el acceso según el rol del usuario.
+ * @returns {Object} JSON con un mensaje de éxito o error.
  */
-router.delete('/:id', verifyToken, (req, res, next) => {
-    if (req.user.rol !== 'co') {
-        return res.status(403).json({ error: 'Acceso denegado' });
+router.delete('/delete/:id', verifyToken, (req, res, next) => {
+    const { rol } = req.user;
+
+    if (rol === 'visitor') {
+        return res.status(403).json({ error: 'Access denied: Visitors cannot delete offers.' });
     }
-    next(); // Si el usuario tiene rol de "empresa", se pasa al controlador
+
+    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied: Companies cannot delete offers for other companies.' });
+    }
+
+    next();
 }, offersController.deleteOfferById);
 
 /**
- * Ruta para actualizar una oferta de trabajo por ID.
- * Solo los usuarios con rol de "empresa" (`co`) pueden acceder a esta ruta.
- * 
- * @name PUT /:id
- * @function
- * @memberof module:OffersRoutes
- * @param {Object} req - Objeto de solicitud HTTP.
- * @param {string} req.params.id - ID de la oferta a actualizar.
- * @param {Object} req.body - Datos actualizados de la oferta.
- * @param {Object} res - Objeto de respuesta HTTP.
- * @returns {Object} JSON con un mensaje de éxito si se actualiza la oferta, o un mensaje de error en caso de acceso denegado.
+ * @route PUT /update/:id
+ * @description Actualiza una oferta de trabajo por su ID.
+ * @access Empresas (propias) y administradores.
+ * @param {string} id - ID de la oferta a actualizar.
+ * @middleware verifyToken - Verifica el token JWT para autenticación.
+ * @middleware next - Valida el acceso según el rol del usuario.
+ * @returns {Object} JSON con un mensaje de éxito o error.
  */
-router.put('/:id', verifyToken, (req, res, next) => {
-    if (req.user.rol !== 'co') {
-        return res.status(403).json({ error: 'Acceso denegado' });
+router.put('/update/:id', verifyToken, (req, res, next) => {
+    const { rol } = req.user;
+
+    if (rol === 'visitor') {
+        return res.status(403).json({ error: 'Access denied: Visitors cannot update offers.' });
     }
-    next(); // Si el usuario tiene rol de "empresa", se pasa al controlador
+
+    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied: Companies cannot update offers for other companies.' });
+    }
+
+    next();
 }, offersController.updateOfferById);
+
+/**
+ * @route GET /all
+ * @description Obtiene todas las ofertas de la colección.
+ * @access Solo administradores.
+ * @middleware verifyToken - Verifica el token JWT para autenticación.
+ * @returns {Object} JSON con todas las ofertas o un mensaje de error.
+ */
+router.get('/all', verifyToken, offersController.getAllOffers);
+
+/**
+ * @route GET /search
+ * @description Busca ofertas con filtros específicos.
+ * @access Todos los usuarios autenticados.
+ * @middleware verifyToken - Verifica el token JWT para autenticación.
+ * @returns {Object} JSON con las ofertas filtradas o un mensaje de error.
+ */
+router.get('/search', verifyToken, offersController.searchOffers);
 
 module.exports = router;
