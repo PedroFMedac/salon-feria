@@ -26,94 +26,60 @@ const { db } = require('../config/firebaseConfig');
  * @throws {Error} Devuelve un error si el token es inválido o ha expirado.
  */
 
-const verifyToken = (req, res, next) => {
-  try {
-    // Obtener el token desde las cookies
-    const token = req.cookies?.authToken;
-    if (!token) {
-      console.log('No token provided');
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    // Verificar el token y decodificarlo
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    console.log('Token decodificado:', decoded);
-
-    // Añadir los datos del usuario al objeto `req` para su uso posterior
-    req.user = {
-      id: decoded.id,
-      name: decoded.name,
-      email: decoded.email,
-      rol: decoded.rol || 'user' // Establecer un rol predeterminado si no está presente
-    };
-
-    // Continuar con el siguiente middleware
-    next();
-  } catch (err) {
-    console.error('Error al verificar el token:', err.message);
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
-};
-
 /**
- * Middleware para verificar un token desde el encabezado `Authorization`.
- * Este middleware valida el token JWT enviado en el encabezado y adjunta los datos decodificados al objeto `req`.
+ * Middleware para verificar un token JWT desde el encabezado `Authorization` o las cookies.
  * 
- * @function verifyHeaderToken
+ * Este middleware valida el token JWT enviado en el encabezado `Authorization` con formato `Bearer <token>` 
+ * o en las cookies (clave `authToken`). Si el token es válido, los datos decodificados se adjuntan al 
+ * objeto `req.user` para ser utilizados en el manejo posterior de la solicitud.
+ * 
  * @param {Object} req - Objeto de solicitud HTTP.
  * @param {Object} req.headers - Encabezados de la solicitud HTTP.
  * @param {string} req.headers.authorization - Encabezado `Authorization` con formato `Bearer <token>`.
+ * @param {Object} req.cookies - Cookies de la solicitud HTTP.
+ * @param {string} req.cookies.authToken - Token JWT del usuario.
  * @param {Object} res - Objeto de respuesta HTTP.
  * @param {Function} next - Función para pasar el control al siguiente middleware.
  * @returns {void} Responde con un error 401 si el token es inválido o no está presente.
  * 
- * @throws {Error} Si el token es inválido, está expirado o no se encuentra en el encabezado.
- * 
- * @example
- * // Uso en una ruta protegida
- * app.get('/protected-route', verifyHeaderToken, (req, res) => {
- *   res.json({ message: `Welcome, ${req.user.name}` });
- * });
- * 
- * @description
- * Este middleware espera que el encabezado `Authorization` contenga un token JWT con el formato:
- * `Bearer <token>`. Si el token es válido, los datos decodificados se adjuntan al objeto `req.user`
- * para ser utilizados en el manejo posterior de la solicitud.
- * 
- * Campos incluidos en `req.user`:
- * - `id` (string): ID del usuario.
- * - `name` (string): Nombre del usuario.
- * - `email` (string): Email del usuario.
- * - `rol` (string): Rol del usuario (por defecto, `'user'` si no se incluye en el token).
+ * @throws {Error} Si el token es inválido, está expirado o no se encuentra.
  */
+const verifyToken = (req, res, next) => {
+  let token;
 
-const verifyHeaderToken = (req, res, next) => {
+  // Intentar obtener el token desde el encabezado `Authorization`
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    token = authHeader.split(' ')[1];
+  } else {
+    // Si no está en el encabezado, buscarlo en las cookies
+    token = req.cookies?.authToken;
+  }
+
+  if (!token) {
+    console.log('No token provided');
+    return res.status(401).json({ error: 'No token provided' });
+  }
+
   try {
-    // Verificar el token desde el encabezado Authorization
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided in Authorization header' });
-    }
-
-    const token = authHeader.split(' ')[1];
+    // Verificar el token y decodificarlo
     const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    console.log('Token decodificado desde encabezado:', decoded);
+    console.log('Token decodificado:', decoded);
 
     // Adjuntar los datos del usuario al objeto req
     req.user = {
       id: decoded.id,
       name: decoded.name,
       email: decoded.email,
-      rol: decoded.rol || 'user', // Rol predeterminado
+      rol: decoded.rol || 'user', // Rol predeterminado si no está presente
     };
 
-    next();
+    next(); // Pasar al siguiente middleware
   } catch (err) {
-    console.error('Error al verificar el token desde encabezado:', err.message);
+    console.error('Error al verificar el token:', err.message);
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
-
 /**
  * Middleware para verificar el token JWT y el rol del usuario.
  * 
