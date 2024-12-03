@@ -121,4 +121,4 @@ const verifyTokenWithRole = (requiredRole) => (req, res, next) => {
 
 
 
-module.exports = { verifyToken, verifyTokenWithRole, verifyHeaderToken };
+module.exports = { verifyToken, verifyTokenWithRole };
