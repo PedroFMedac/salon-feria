@@ -2,6 +2,7 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const axios = require('axios');
 
 
 const authRoutes = require ('./routes/auth');
@@ -20,6 +21,17 @@ app.use(cors({
     credentials: true // Necesario si trabajas con cookies
 }));
 app.use(express.json());
+
+app.get('/proxy', async (req, res) => {
+    const { url } = req.query;
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      res.set('Content-Type', response.headers['content-type']);
+      res.send(response.data);
+    } catch (error) {
+      res.status(500).send('Error al cargar la imagen');
+    }
+  });
 
 app.use('/auth', authRoutes);
 app.use('/users', usersRoutes);
