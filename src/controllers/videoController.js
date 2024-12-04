@@ -51,7 +51,7 @@ const addVideo = async (req, res) => {
         } else {
             // Si no existe un documento, crear uno nuevo con el array de URLs
             const newVideo = {
-                id,
+                companyID: id,
                 urls: [url]
             };
 
