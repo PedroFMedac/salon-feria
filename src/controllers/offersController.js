@@ -59,7 +59,7 @@ const addOffers = async (req, res) => {
             companyID: id,
             sector: sector || null, // Valor opcional
             logo, // Logo de la empresa
-            companyName: companyData.company, // Nombre de la empresa
+            companyName: companyData.name, // Nombre de la empresa
             createdAt: admin.firestore.Timestamp.now(), // Timestamp
         };
 
