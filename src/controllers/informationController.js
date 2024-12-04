@@ -219,7 +219,7 @@ const updateInfCompany = async (req, res) => {
         // Crear los datos actualizados
         const updatedData = {
             description,
-            information: additional_information || '',
+            additional_information: additional_information || '',
             links: links || [],
             sector: sector || null,
             updatedAt: admin.firestore.Timestamp.now(),
