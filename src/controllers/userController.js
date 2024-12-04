@@ -517,7 +517,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
-                   user.logo ? db.collection('logos').where('companyID', '==', user.id).get() : null,
+                    db.collection('logos').where('companyID', '==', user.id).get(),
                 ]);
 
                 const logo = logoSnapshop.docs.map(doc =>{
@@ -574,7 +574,7 @@ const getCompanyAll = async (req, res) => {
                             const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
                             return { 
                                 id: standSnapshot.id,
-                                url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                                //url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                                  ...filteredData };
                         })()
                         : null;
@@ -584,7 +584,7 @@ const getCompanyAll = async (req, res) => {
                             const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
                             return { 
                                 id: modelSnapshot.id,
-                                url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                                //url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                                  ...filteredData };
                         })()
                         : null;
@@ -594,8 +594,8 @@ const getCompanyAll = async (req, res) => {
                             const { companyID, createdAt, ...filteredData } = fileSnapshot.data(); // Puedes aplicar otro filtro aquí si es necesario
                             return { 
                                 id: fileSnapshot.id,
-                                banner: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.banner}`,
-                                poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
+                                //banner: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.banner}`,
+                               // poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
                                  ...filteredData };
                         })()
                         : null;
