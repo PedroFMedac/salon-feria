@@ -60,7 +60,7 @@ const login = async (req, res) => {
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: true,
-            sameSite: 'Lax',
+            sameSite: 'None',
             maxAge: 604800000, // 7 días en milisegundos
         });
 
