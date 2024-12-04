@@ -512,12 +512,11 @@ const getCompanyAll = async (req, res) => {
         const results = await Promise.all(
             users.map(async (user) => {
                 // Buscar documentos relacionados en otras colecciones
-                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot, logoDoc] = await Promise.all([
+                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot] = await Promise.all([
                     db.collection('offers').where('companyID', '==', user.id).get(),
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
-                    user.logo ? db.collection('logos').doc(user.logo).get() : null // Consulta el logo si tiene ID
                 ]);
 
                 // Mapear resultados de las colecciones relacionadas
@@ -589,11 +588,18 @@ const getCompanyAll = async (req, res) => {
                 }
 
                 // Obtener URL del logo si existe
-                const logoUrl = logoDoc && logoDoc.exists ? 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url : null;
+                // Consultar logo si existe
+                let logoUrl = null;
+                if (user.logo) {
+                    const logoDoc = await db.collection('logos').doc(user.logo).get();
+                    if (logoDoc.exists) {
+                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url;
+                    }
+                }
 
 
                 return {
-                    user:{
+                    user: {
                         ...user,
                         logo: logoUrl
                     },
