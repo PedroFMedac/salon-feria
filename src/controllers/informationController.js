@@ -206,13 +206,15 @@ const updateInfCompany = async (req, res) => {
             return res.status(400).json({ message: 'Links must have additionalButtonTitle and additionalButtonLink' });
         }
 
-        // Obtener la referencia del documento de la compañía
-        const companyRef = db.collection('company').doc(companyID);
-        const companySnapshot = await companyRef.get();
+        // Buscar el documento de la compañía por companyID
+        const companySnapshot = await db.collection('company').where('companyID', '==', companyID).get();
 
-        if (!companySnapshot.exists) {
+        if (companySnapshot.empty) {
             return res.status(404).json({ message: 'Company not found' });
         }
+
+        // Obtén el primer documento encontrado
+        const companyDoc = companySnapshot.docs[0];
 
         // Crear los datos actualizados
         const updatedData = {
@@ -223,8 +225,8 @@ const updateInfCompany = async (req, res) => {
             updatedAt: admin.firestore.Timestamp.now(),
         };
 
-        // Actualizar la información de la compañía en Firestore
-        await companyRef.update(updatedData);
+        // Actualizar la información de la compañía
+        await companyDoc.ref.update(updatedData);
 
         // Responder con éxito
         res.status(200).json({ message: 'Company information updated successfully', updatedData });
@@ -236,6 +238,7 @@ const updateInfCompany = async (req, res) => {
         });
     }
 };
+
 
 /**
  * Deletes specific documents from a company while keeping the specified ones.
