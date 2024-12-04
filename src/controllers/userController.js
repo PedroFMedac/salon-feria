@@ -107,7 +107,7 @@ const register = async (req, res) => {
 
             // Crear un documento en la colección 'logos'
             const logoDoc = await db.collection('logos').add({
-                userId: null, // Se actualizará después
+                companyId: null, // Se actualizará después
                 url: logoUrl,
                 uploadedAt: admin.firestore.Timestamp.now(),
             });
@@ -156,7 +156,7 @@ const register = async (req, res) => {
 
         // Si se subió un logo, actualizar el documento del logo con el ID del usuario
         if (logoId) {
-            await db.collection('logos').doc(logoId).update({ userId: userRef.id });
+            await db.collection('logos').doc(logoId).update({ companyId: userRef.id });
 
         }
 
@@ -517,7 +517,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
-                    db.collection('logo').where('companyID', '==', user.id).get(),
+                    db.collection('logos').where('companyID', '==', user.id).get(),
                 ]);
 
                 const logo = logoSnapshop.docs.docs.map(doc =>{
