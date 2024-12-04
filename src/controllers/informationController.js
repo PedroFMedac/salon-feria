@@ -160,17 +160,25 @@ const getInfCompany = async (req, res) => {
         if (!companyID) {
             return res.status(400).json({ message: 'Company ID is required' });
         }
-        const company = await db.collection('company').doc(companyID).get();
-        if (!company.exists) {
+
+        // Realizar la consulta con `where`
+        const companySnapshot = await db.collection('company').where('companyID', '==', companyID).get();
+
+        // Verificar si hay documentos en el snapshot
+        if (companySnapshot.empty) {
             return res.status(404).json({ message: 'Company not found' });
         }
-        const companyData = company.data();
+
+        // Extraer los datos del primer documento encontrado
+        const companyData = companySnapshot.docs[0].data();
+        
         return res.status(200).json(companyData);
-    } catch (erro) {
-        console.error('Error getting information company: ', erro);
+    } catch (error) {
+        console.error('Error getting information company: ', error);
         return res.status(500).json({ message: 'Error getting information company' });
     }
 };
+
 
 /**
  * Updates information for a company.
