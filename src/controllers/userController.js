@@ -520,7 +520,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('logos').where('companyID', '==', user.id).get(),
                 ]);
 
-                const logo = logoSnapshop.docs.docs.map(doc =>{
+                const logo = logoSnapshop.docs.map(doc =>{
                     const data = doc.data();
                     const {companyID, ...filtaredLogoData} = data;
                     return {
