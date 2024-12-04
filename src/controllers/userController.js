@@ -56,7 +56,10 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'invalid_name', message: 'Name already exists.' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Convertir password a string si es un número
+        const passwordAsString = typeof password === 'number' ? String(password) : password;
+
+        const hashedPassword = await bcrypt.hash(passwordAsString, 10);
 
         /*
         // Subir la imagen y el documento a Firebase Storage
@@ -138,8 +141,8 @@ const register = async (req, res) => {
             });
         }
 
-         // Preparar datos del usuario
-         const userData = {
+        // Preparar datos del usuario
+        const userData = {
             name,
             email,
             rol,
