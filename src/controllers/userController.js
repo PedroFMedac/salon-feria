@@ -512,22 +512,22 @@ const getCompanyAll = async (req, res) => {
         const results = await Promise.all(
             users.map(async (user) => {
                 // Buscar documentos relacionados en otras colecciones
-                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot] = await Promise.all([
+                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot, logoSnapshop] = await Promise.all([
                     db.collection('offers').where('companyID', '==', user.id).get(),
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
+                    db.collection('logo').where('companyID', '==', user.id).get(),
                 ]);
 
-                // Obtener URL del logo si existe
-                // Consultar logo si existe
-                let logoUrl = null;
-                if (user.logo && typeof user.logo === 'string' && user.logo.trim() !== '') {
-                    const logoDoc = await db.collection('logos').doc(user.logo).get();
-                    if (logoDoc.exists) {
-                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url;
-                    }
-                }
+                const logo = logoSnapshop.docs.docs.map(doc =>{
+                    const data = doc.data();
+                    const {companyID, ...filtaredLogoData} = data;
+                    return {
+                        id: doc.id,
+                        ...filtaredLogoData
+                        };
+                });
 
                 // Mapear resultados de las colecciones relacionadas
                 const offers = offersSnapshot.docs.map(doc => {
@@ -598,10 +598,8 @@ const getCompanyAll = async (req, res) => {
                 }
 
                 return {
-                    user: {
-                        ...user,
-                        logo: logoUrl || null
-                    },
+                    user,
+                    logo,
                     relatedData: {
                         offers,
                         videos,
