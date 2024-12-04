@@ -517,7 +517,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
-                    db.collection('logos').where('companyID', '==', user.id).get(),
+                   logo ? db.collection('logos').where('companyID', '==', user.id).get() : null,
                 ]);
 
                 const logo = logoSnapshop.docs.map(doc =>{
