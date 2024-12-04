@@ -58,7 +58,7 @@ const login = async (req, res) => {
 
         // Configurar cookie con el token
         res.cookie('authToken', token, {
-            httpOnly: true,
+            httpOnly: false,
             secure: true,
             sameSite: 'Lax',
             maxAge: 604800000, // 7 días en milisegundos
