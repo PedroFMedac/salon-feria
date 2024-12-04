@@ -53,7 +53,7 @@ const createDesign = async (req, res) => {
         // Subir archivo de banner a Google Drive
         if (bannerUpload) {
             const file = await uploadFileToDrive(bannerUpload, 'banners');
-            bannerUrl = file.webViewLink;
+            bannerUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + file.webViewLink;
             fs.unlink(bannerUpload.path, (err) => {
                 if (err) console.error('Error deleting temporary file:', err);
             });
@@ -62,7 +62,7 @@ const createDesign = async (req, res) => {
         // Subir archivo de póster a Google Drive
         if (posterUpload) {
             const file = await uploadFileToDrive(posterUpload, 'posters');
-            posterUrl = file.webViewLink;
+            posterUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + file.webViewLink;
             fs.unlink(posterUpload.path, (err) => {
                 if (err) console.error('Error deleting temporary file:', err);
             });
@@ -86,7 +86,19 @@ const createDesign = async (req, res) => {
             return res.status(404).json({ message: 'User not found, cannot retrieve logo.' });
         }
 
-        const logo = userSnapshot.data().logo;
+        const logoSnapshot = await db.collection('logos').where('companyID', '==', id).get();
+        if (logoSnapshot.empty) {
+            return res.status(404).json({
+                message: 'No se encontró logo de la empresa'
+            });
+        }
+        const logoDoc = logoSnapshot.docs[0]; // Tomar el primer logo
+        const logo = logoDoc
+            ? {
+                id: logoDoc.id,
+                url: `https://backend-node-wpf9.onrender.com/proxy?url=${logoDoc.data().url}`,
+            }
+            : null;
 
         // Actualizar el campo `design` a `true`
         await userDocRef.update({
@@ -280,7 +292,6 @@ const updateDesign = async (req, res) => {
     const { standID, modelID } = req.body;
     const bannerUpload = req.files?.banner ? req.files.banner[0] : null;
     const posterUpload = req.files?.poster ? req.files.poster[0] : null;
-    const logoUpload = req.files?.logo ? req.files.logo[0] : null;
 
     const companyID = req.user.rol === 'admin' ? req.params.id : req.user.id;
 
@@ -370,7 +381,7 @@ const updateDesign = async (req, res) => {
         // Subir nuevo archivo de banner a Google Drive
         if (bannerUpload) {
             const file = await uploadFileToDrive(bannerUpload, 'banners');
-            newBannerUrl = file.webViewLink;
+            newBannerUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + file.webViewLink;
             fs.unlink(bannerUpload.path, (err) => {
                 if (err) console.error('Error deleting temporary file:', err);
             });
@@ -379,7 +390,7 @@ const updateDesign = async (req, res) => {
         // Subir nuevo archivo de póster a Google Drive
         if (posterUpload) {
             const file = await uploadFileToDrive(posterUpload, 'posters');
-            newPosterUrl = file.webViewLink;
+            newPosterUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + file.webViewLink;
             fs.unlink(posterUpload.path, (err) => {
                 if (err) console.error('Error deleting temporary file:', err);
             });
@@ -428,32 +439,9 @@ const updateDesign = async (req, res) => {
         });
         */
 
-        //GOOGLE DRIVE
-        // Eliminar logo existente en Google Drive
-        if (existingUserData.logo) {
-            const logoFileId = getFileIdFromUrl(existingUserData.logo);
-            await deleteFileFromDrive(logoFileId);
-        }
-
-        // Subir nuevo logo a Google Drive
-        let newLogoUrl = null;
-        if (logoUpload) {
-            const file = await uploadFileToDrive(logoUpload, 'logos');
-            newLogoUrl = file.webViewLink;
-            fs.unlink(logoUpload.path, (err) => {
-                if (err) console.error('Error deleting temporary file:', err);
-            });
-        }
-
-        // Actualizar logo en Firestore
-        await userDocRef.update({
-            logo: newLogoUrl || existingUserData.logo,
-        });
-
         // Actualizar diseño en Firestore
         const designDoc = existDesignSnapshot.docs[0];
         const updatedDesignData = {
-            logo: newLogoUrl || existingUserData.logo,
             standID: standID || designDoc.data().standID,
             modelID: modelID || designDoc.data().modelID,
         };
@@ -562,16 +550,16 @@ const getAllModels = async (req, res) => {
         // Obtener todos los documentos de la colección 'model'
         const modelSnapshot = await db.collection('model').get();
 
-        if(modelSnapshot.empty) {
+        if (modelSnapshot.empty) {
             return res.status(404).json({ message: 'No models found.' });
         }
 
         const models = modelSnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-            }));
-            res.status(200).json(models);
-    } catch (error){
+        }));
+        res.status(200).json(models);
+    } catch (error) {
         console.error('Error getting models:', error);
         res.status(500).json({ message: 'Error getting models', error: error.message });
     }

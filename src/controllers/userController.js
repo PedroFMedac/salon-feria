@@ -597,8 +597,6 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: fileSnapshot.id,
                                 ...filteredData,
-                                banner: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.banner}`,
-                                poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
                             };
                         })()
                         : null;

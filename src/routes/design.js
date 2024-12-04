@@ -27,9 +27,6 @@ router.post('/addDesign/:id?', upload.fields([{ name: 'banner' }, { name: 'poste
     if (req.user.rol === 'visitor') {
         return res.status(403).json({ error: 'Access denied: Visitors cannot add designs.' });
     }
-    if (req.user.rol === 'co' && req.params.id && req.params.id !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied: Companies cannot add designs for other companies.' });
-    }
     next();
 }, designController.createDesign);
 
@@ -70,12 +67,8 @@ router.get('/allDesigns', verifyToken, (req, res, next) => {
  * @middleware verifyToken
  * @middleware multer
  */
-router.put('/updateDesign/:id?', upload.fields([{ name: 'banner' }, { name: 'poster' }, { name: 'logo' }]), verifyToken, async (req, res, next) => {
+router.put('/updateDesign/:id?', upload.fields([{ name: 'banner' }, { name: 'poster' }]), verifyToken, async (req, res, next) => {
     try {
-        const { id } = req.params;
-        if (req.user.rol === 'co' && id !== req.user.id) {
-            return res.status(403).json({ error: 'Access denied: Companies can only modify their own designs.' });
-        }
         if (req.user.rol === 'visitor') {
             return res.status(403).json({ error: 'Access denied: Visitors cannot modify designs.' });
         }
@@ -96,10 +89,6 @@ router.put('/updateDesign/:id?', upload.fields([{ name: 'banner' }, { name: 'pos
  */
 router.delete('/deleteDesign/:id?', verifyToken, (req, res, next) => {
     try {
-        const { id } = req.params;
-        if (req.user.rol === 'co' && id !== req.user.id) {
-            return res.status(403).json({ error: 'Access denied: Companies can only modify their own designs.' });
-        }
         if (req.user.rol === 'visitor') {
             return res.status(403).json({ error: 'Access denied: Visitors cannot modify designs.' });
         }
