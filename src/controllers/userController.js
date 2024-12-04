@@ -8,7 +8,7 @@
 const { admin, db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { uploadFileToDrive } = require('../service/googleDrive');
+const { uploadFileToDrive } = require('../config/googleDrive');
 const fs = require('fs');
 const { doubleclickbidmanager } = require('googleapis/build/src/apis/doubleclickbidmanager');
 

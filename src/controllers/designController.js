@@ -8,7 +8,7 @@
 
 const { db, admin } = require('../config/firebaseConfig');
 const jwt = require('jsonwebtoken');
-const { uploadFileToDrive, getFileIdFromUrl, deleteFileFromDrive } = require('../service/googleDrive');
+const { uploadFileToDrive, getFileIdFromUrl, deleteFileFromDrive } = require('../config/googleDrive');
 const fs = require('fs');
 
 /**

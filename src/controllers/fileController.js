@@ -5,7 +5,7 @@
  */
 
 const { admin, db } = require('../config/firebaseConfig');
-const { uploadFileToDrive, deleteFileFromDrive, getFileIdFromUrl } = require('../service/googleDrive');
+const { uploadFileToDrive, deleteFileFromDrive, getFileIdFromUrl } = require('../config/googleDrive');
 const fs = require('fs');
 
 /**
