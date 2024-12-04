@@ -17,12 +17,12 @@ const { db, admin } = require('../config/firebaseConfig');
  */
 const addOffers = async (req, res) => {
 
-    const { position, workplace_type, location, job_type, sector, description } = req.body;
+    const { position, workplace_type, location, job_type, sector, description, link } = req.body;
     const id = req.user.rol === 'admin' ? req.params.id : req.user.id;
 
     try {
         // Validar los campos obligatorios
-        if (!position || !location || !description) {
+        if (!position || !location || !description || !link) {
             return res.status(400).json({ message: 'Todos los campos son obligatorios' });
         }
 
@@ -59,6 +59,7 @@ const addOffers = async (req, res) => {
             companyID: id,
             sector: sector || null, // Valor opcional
             logo, // Logo de la empresa
+            link,
             companyName: companyData.name, // Nombre de la empresa
             createdAt: admin.firestore.Timestamp.now(), // Timestamp
         };
