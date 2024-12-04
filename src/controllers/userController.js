@@ -517,6 +517,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
+                    user.logo ? db.collection('logos').doc(user.logo).get() : null // Consulta el logo si tiene ID
                 ]);
 
                 // Mapear resultados de las colecciones relacionadas
@@ -586,6 +587,10 @@ const getCompanyAll = async (req, res) => {
                         files: fileData,
                     };
                 }
+
+                // Obtener URL del logo si existe
+                const logoUrl = logoDoc && logoDoc.exists ? 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url : null;
+
 
                 return {
                     user, // Información del usuario
