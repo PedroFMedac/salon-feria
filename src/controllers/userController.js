@@ -184,18 +184,33 @@ const getAllCompany = async (req, res) => {
             return res.status(404).json({ message: 'No companies found' });
         }
 
-        // Mapear los datos de las empresas
-        const companies = companyDoc.docs.map(doc => {
-            const data = doc.data();
-            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña
-            return {
-                id: doc.id, // Incluye el ID del documento
-                ...filteredData
-            };
-        });
+        // Mapear los datos de las empresas y obtener sus logos
+        const companies = await Promise.all(
+            companyDoc.docs.map(async (doc) => {
+                const data = doc.data();
+                const { password, createdAt, rol, logo: logoId, ...filteredData } = data; // Excluir contraseña
+
+                let logoUrl = null;
+
+                // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
+                if (logoId) {
+                    const logoDoc = await db.collection('logos').doc(logoId).get();
+                    if (logoDoc.exists) {
+                        logoUrl = logoDoc.data().url; // Extraer la URL del logo
+                    }
+                }
+
+                return {
+                    id: doc.id, // Incluye el ID del documento
+                    ...filteredData,
+                    logo: logoUrl, // Devuelve la URL del logo
+                };
+            })
+        );
 
         res.status(200).json({ companies });
     } catch (error) {
+        console.error('Error al obtener empresas:', error);
         res.status(500).json({ error: 'Failed to get companies' });
     }
 };
@@ -286,14 +301,27 @@ const getAllUsers = async (req, res) => {
         }
 
         // Mapear los datos
-        const users = userDoc.docs.map(doc => {
-            const data = doc.data();
-            const { password, createdAt, rol, ...filteredData } = data; // Excluir contraseña, createdAt y rol
-            return {
-                id: doc.id, // Incluye el ID del documento
-                ...filteredData
-            };
-        });
+        const users = await Promise.all(
+            userDoc.docs.map(async (doc) => {
+                const data = doc.data();
+                const { password, createdAt, logo: logoId, ...filteredData } = data; // Excluir campos sensibles
+                let logoUrl = null;
+
+                // Si el usuario tiene un logoId, buscar la URL en la colección 'logos'
+                if (logoId) {
+                    const logoDoc = await db.collection('logos').doc(logoId).get();
+                    if (logoDoc.exists) {
+                        logoUrl = logoDoc.data().url; // Obtener la URL del logo
+                    }
+                }
+
+                return {
+                    id: doc.id, // Incluye el ID del documento
+                    ...filteredData,
+                    logo: logoUrl, // Reemplazar logoId con la URL del logo
+                };
+            })
+        );
 
         res.status(200).json({ users });
     } catch (error) {
@@ -301,6 +329,7 @@ const getAllUsers = async (req, res) => {
         res.status(500).json({ error: 'Failed to get users' });
     }
 };
+
 
 /**
  * Obtiene los datos de un usuario específico por su ID.
@@ -315,6 +344,7 @@ const getUserById = async (req, res) => {
     const companyID = req.user.rol === 'co' ? req.user.id : req.params.id;
 
     try {
+        // Obtener el usuario por ID
         const userDoc = await db.collection('users').doc(companyID).get();
 
         if (!userDoc.exists) {
@@ -322,14 +352,30 @@ const getUserById = async (req, res) => {
         }
 
         const userData = userDoc.data();
-        const { password, ...filteredData } = userData; // Excluir contraseña
+        const { password, logo: logoId, ...filteredData } = userData; // Excluir contraseña y obtener logoId
+        let logoUrl = null;
 
-        res.status(200).json({ user: { id: userDoc.id, ...filteredData } });
+        // Si el usuario tiene un logoId, buscar la URL en la colección 'logos'
+        if (logoId) {
+            const logoDoc = await db.collection('logos').doc(logoId).get();
+            if (logoDoc.exists) {
+                logoUrl = logoDoc.data().url; // Obtener la URL del logo
+            }
+        }
+
+        res.status(200).json({
+            user: {
+                id: userDoc.id,
+                ...filteredData,
+                logo: logoUrl // Incluir la URL del logo
+            }
+        });
     } catch (error) {
         console.error('Error fetching user by ID:', error);
         res.status(500).json({ error: 'Failed to get user by ID' });
     }
 };
+
 
 /**
  * Actualiza los datos de un usuario específico.
@@ -471,6 +517,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
+                    user.logo ? db.collection('logos').doc(user.logo).get() : null, // Consulta el logo si tiene ID
                 ]);
 
                 // Mapear resultados de las colecciones relacionadas
@@ -541,8 +588,14 @@ const getCompanyAll = async (req, res) => {
                     };
                 }
 
+                // Obtener URL del logo si existe
+                const logoUrl = logoDoc && logoDoc.exists ? logoDoc.data().url : null;
+
                 return {
-                    user, // Información del usuario
+                    user: {
+                        ...user,
+                        logo: logoUrl, // Reemplazar el ID del logo con la URL
+                    }, // Información del usuario
                     relatedData: {
                         offers,
                         videos,
