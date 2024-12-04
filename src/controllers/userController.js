@@ -196,7 +196,7 @@ const getAllCompany = async (req, res) => {
                 if (logoId) {
                     const logoDoc = await db.collection('logos').doc(logoId).get();
                     if (logoDoc.exists) {
-                        logoUrl = logoDoc.data().url; // Extraer la URL del logo
+                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url; // Extraer la URL del logo
                     }
                 }
 
@@ -311,7 +311,7 @@ const getAllUsers = async (req, res) => {
                 if (logoId) {
                     const logoDoc = await db.collection('logos').doc(logoId).get();
                     if (logoDoc.exists) {
-                        logoUrl = logoDoc.data().url; // Obtener la URL del logo
+                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url; // Obtener la URL del logo
                     }
                 }
 
@@ -359,7 +359,7 @@ const getUserById = async (req, res) => {
         if (logoId) {
             const logoDoc = await db.collection('logos').doc(logoId).get();
             if (logoDoc.exists) {
-                logoUrl = logoDoc.data().url; // Obtener la URL del logo
+                logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url; // Obtener la URL del logo
             }
         }
 
@@ -589,7 +589,7 @@ const getCompanyAll = async (req, res) => {
                 }
 
                 // Obtener URL del logo si existe
-                const logoUrl = logoDoc && logoDoc.exists ? logoDoc.data().url : null;
+                const logoUrl = logoDoc && logoDoc.exists ? 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url : null;
 
                 return {
                     user: {
