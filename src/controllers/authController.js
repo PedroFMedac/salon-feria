@@ -44,7 +44,11 @@ const login = async (req, res) => {
         const user = userDoc.data();
 
         // Verificar contraseña
+
         const isValidPassword = await bcrypt.compare(String(password), user.password);
+        console.log("Contraseña original:", password);
+        console.log("Hash generado:", hashedPassword);
+        console.log("Hash almacenado en BD:", user.password);
         if (!isValidPassword) {
             return res.status(401).json({ error: 'invalid_password', message: 'Password invalid.' });
         }
