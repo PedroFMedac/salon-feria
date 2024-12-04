@@ -525,7 +525,7 @@ const getCompanyAll = async (req, res) => {
                     const {companyID, uploadedAt, ...filtaredLogoData} = data;
                     return {
                         id: doc.id,
-                        url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredLogoData.url}`,
+                        url: `https://backend-node-wpf9.onrender.com/proxy?url=${filtaredLogoData.url}`,
                         ...filtaredLogoData
                         };
                 });
