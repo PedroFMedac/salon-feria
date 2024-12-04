@@ -593,7 +593,10 @@ const getCompanyAll = async (req, res) => {
 
 
                 return {
-                    user, // Información del usuario
+                    user:{
+                        ...user,
+                        logo: logoUrl
+                    },
                     relatedData: {
                         offers,
                         videos,
