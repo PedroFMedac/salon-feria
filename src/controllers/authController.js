@@ -45,9 +45,7 @@ const login = async (req, res) => {
 
         // Verificar contraseña
 
-        const isValidPassword = await bcrypt.compare(String(password), user.password);
-        console.log("Contraseña original:", password);
-        console.log("Hash almacenado en BD:", user.password);
+        const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             return res.status(401).json({ error: 'invalid_password', message: 'Password invalid.' });
         }

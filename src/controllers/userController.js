@@ -56,7 +56,7 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'invalid_name', message: 'Name already exists.' });
         }
 
-        const hashedPassword = await bcrypt.hash(String(password), 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
 
 
