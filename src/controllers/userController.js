@@ -29,10 +29,10 @@ const { doubleclickbidmanager } = require('googleapis/build/src/apis/doubleclick
 
 const register = async (req, res) => {
     const { name, email, password, rol, phone, subname, studies, cif, dni } = req.body;
-    const logoUpload = req.files?.logo ? req.files.logo[0] : null;
-    const profileImagenUpload = req.files?.profileImagen ? req.files.profileImagen[0] : null;
+    const logoUpload = req.files?.logo ? req.files.logo[0] : null; // Asegúrate de que req.files.file[0] exista
+    const profileImagenUpload = req.files?.profileImagen ? req.files.profileImagen[0] : null; // Aseg
     const cvUpload = req.files?.cv ? req.files.cv[0] : null;
-
+    console.log('req.files:', req.files);
     if (!name || !email || !password || !rol) {
         return res.status(400).json({ error: 'invalid_request', message: 'Invalid request.' });
     }
@@ -43,9 +43,10 @@ const register = async (req, res) => {
     }
 
     try {
+
         const [usersEmailSnapshot, usersNameSnapshot] = await Promise.all([
             db.collection('users').where('email', '==', email).get(),
-            db.collection('users').where('name', '==', name).get(),
+            db.collection('users').where('name', '==', name).get()
         ]);
 
         if (!usersEmailSnapshot.empty) {
@@ -56,8 +57,7 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'invalid_name', message: 'Name already exists.' });
         }
 
-        // Convertir password a string si es un número
-        const hashedPassword = await bcrypt.hash(password, 10)
+        const hashedPassword = await bcrypt.hash(password, 10);
 
 
         /*
