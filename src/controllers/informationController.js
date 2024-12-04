@@ -5,7 +5,7 @@
  * Define la lógica para manejar las solicitudes relacionadas la informacion de la empresa.
  */
 
-const { db } = require('../config/firebaseConfig');
+const { db, admin } = require('../config/firebaseConfig');
 const jwt = require('jsonwebtoken');
 const { uploadFileToDrive, getFileIdFromUrl, deleteFileFromDrive } = require('../service/googleDrive');
 const fs = require('fs');
