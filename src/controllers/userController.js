@@ -519,6 +519,16 @@ const getCompanyAll = async (req, res) => {
                     db.collection('design').where('companyID', '==', user.id).get(),
                 ]);
 
+                // Obtener URL del logo si existe
+                // Consultar logo si existe
+                let logoUrl = null;
+                if (user.logo) {
+                    const logoDoc = await db.collection('logos').doc(user.logo).get();
+                    if (logoDoc.exists) {
+                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url;
+                    }
+                }
+
                 // Mapear resultados de las colecciones relacionadas
                 const offers = offersSnapshot.docs.map(doc => {
                     const data = doc.data();
@@ -587,21 +597,10 @@ const getCompanyAll = async (req, res) => {
                     };
                 }
 
-                // Obtener URL del logo si existe
-                // Consultar logo si existe
-                let logoUrl = null;
-                if (user.logo) {
-                    const logoDoc = await db.collection('logos').doc(user.logo).get();
-                    if (logoDoc.exists) {
-                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url;
-                    }
-                }
-
-
                 return {
                     user: {
                         ...user,
-                        logo: logoUrl
+                        logo: logoUrl || null
                     },
                     relatedData: {
                         offers,
