@@ -61,16 +61,22 @@ const uploadFileToDrive = async (file, folderName) => {
         const response = await drive.files.create({
             requestBody: fileMetadata,
             media: media,
-            fields: 'id, webViewLink',
+            fields: 'id', // Solo necesitamos el ID del archivo
         });
 
-        // Configurar permisos públicos para el archivo subido
-        await setPublicPermissions(response.data.id);
+        const fileId = response.data.id;
 
-        console.log(`Archivo subido: ${file.originalname} (ID: ${response.data.id})`);
+        // Configurar permisos públicos para el archivo subido
+        await setPublicPermissions(fileId);
+
+        console.log(`Archivo subido: ${file.originalname} (ID: ${fileId})`);
+
+        // Construir la URL personalizada
+        const customUrl = `https://drive.google.com/uc?id=${fileId}`;
+
         return {
-            fileId: response.data.id,
-            webViewLink: response.data.webViewLink,
+            fileId,
+            webViewLink: customUrl, // Devolver siempre la URL personalizada
         };
     } catch (error) {
         console.error('Error uploading file to Google Drive:', error.message);
