@@ -1,7 +1,7 @@
 /**
  * @module OffersController
  */
-const { db } = require('../config/firebaseConfig');
+const { db, admin } = require('../config/firebaseConfig');
 
 /**
  * Agrega una nueva oferta de trabajo.
