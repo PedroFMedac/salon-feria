@@ -5,7 +5,7 @@
  * Define la lógica para manejar las solicitudes relacionadas con los usuarios.
  */
 
-const { admin, db } =  require('../config/firebaseConfig');
+const { admin, db } = require('../config/firebaseConfig');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { uploadFileToDrive } = require('../service/googleDrive');
@@ -29,9 +29,10 @@ const { doubleclickbidmanager } = require('googleapis/build/src/apis/doubleclick
 
 const register = async (req, res) => {
     const { name, email, password, rol, phone, subname, studies, cif, dni } = req.body;
-    const fileUpload = req.files?.file ? req.files.file[0] : null; // Asegúrate de que req.files.file[0] exista
+    const logoUpload = req.files?.logo ? req.files.logo[0] : null;
+    const profileImagenUpload = req.files?.profileImagen ? req.files.profileImagen[0] : null;
     const cvUpload = req.files?.cv ? req.files.cv[0] : null;
-    console.log('req.files:', req.files);
+
     if (!name || !email || !password || !rol) {
         return res.status(400).json({ error: 'invalid_request', message: 'Invalid request.' });
     }
@@ -42,10 +43,9 @@ const register = async (req, res) => {
     }
 
     try {
-
         const [usersEmailSnapshot, usersNameSnapshot] = await Promise.all([
             db.collection('users').where('email', '==', email).get(),
-            db.collection('users').where('name', '==', name).get()
+            db.collection('users').where('name', '==', name).get(),
         ]);
 
         if (!usersEmailSnapshot.empty) {
@@ -94,21 +94,42 @@ const register = async (req, res) => {
 
 
         // Subir archivos a Google Drive
-        let fileUrl = null;
+        let profileImagenUrl = null;
+        let logoUrl = null;
         let cvUrl = null;
+        let logoId = null;
 
-        if (fileUpload) {
-            const fileResponse = await uploadFileToDrive(fileUpload, 'profileImages'); // Subir imagen
-            fileUrl = fileResponse.webViewLink;
+        if (logoUpload) {
+            const fileResponse = await uploadFileToDrive(logoUpload, 'logos');
+            logoUrl = fileResponse.webViewLink;
+
+            // Crear un documento en la colección 'logos'
+            const logoDoc = await db.collection('logos').add({
+                userId: null, // Se actualizará después
+                url: logoUrl,
+                uploadedAt: admin.firestore.Timestamp.now(),
+            });
+
+            logoId = logoDoc.id;
+
+            // Limpia el archivo temporal
+            fs.unlink(logoUpload.path, (err) => {
+                if (err) console.error('Error eliminando archivo temporal:', err);
+            });
+        }
+
+        if (profileImagenUpload) {
+            const fileResponse = await uploadFileToDrive(profileImagenUpload, 'profileImages');
+            profileImagenUrl = fileResponse.webViewLink;
 
             // Limpia el archivo temporal después de subirlo
-            fs.unlink(fileUpload.path, (err) => {
+            fs.unlink(profileImagenUpload.path, (err) => {
                 if (err) console.error('Error eliminando archivo temporal:', err);
             });
         }
 
         if (cvUpload) {
-            const cvResponse = await uploadFileToDrive(cvUpload, 'cvFiles'); // Subir CV
+            const cvResponse = await uploadFileToDrive(cvUpload, 'cvFiles');
             cvUrl = cvResponse.webViewLink;
 
             // Limpia el archivo temporal después de subirlo
@@ -117,43 +138,30 @@ const register = async (req, res) => {
             });
         }
 
-
-        let userData = {
-            name: name,
-            email: email,
-            rol: rol,
+         // Preparar datos del usuario
+         const userData = {
+            name,
+            email,
+            rol,
             password: hashedPassword,
+            createdAt: admin.firestore.Timestamp.now(),
+            ...(rol === 'co' && { cif, logo: logoId, design: false, information: false }),
+            ...(rol === 'visitor' && { dni, subname, studies, image: profileImagenUrl, cv: cvUrl, phone }),
+        };
 
-            createdAt: admin.firestore.Timestamp.now()
-        }
-
-        if (rol === 'co') {
-            if (!cif) {
-                return res.status(400).json({ error: 'invalid_cif', message: 'CIF is required for Company.' });
-            }
-            userData.cif = cif;
-            userData.logo = fileUrl;
-            userData.design = false;
-            userData.information = false;
-        }
-
-        if (rol === 'visitor') {
-            if (!dni || !studies) {
-                return res.status(400).json({ error: 'invalid_dni', message: 'DNI and studies are required for Visitor.' });
-            }
-            userData.dni = dni;
-            userData.subname = subname;
-            userData.studies = studies;
-            userData.image = fileUrl;
-            userData.cv = cvUrl;
-            userData.phone = phone;
-        }
-
+        // Crear el usuario
         const userRef = await db.collection('users').add(userData);
+
+        // Si se subió un logo, actualizar el documento del logo con el ID del usuario
+        if (logoId) {
+            await db.collection('logos').doc(logoId).update({ userId: userRef.id });
+
+        }
+
         res.status(201).json({ message: 'User created successfully', id: userRef.id });
     } catch (error) {
-
-        res.status(500).json({ error: 'Failed to create user' })
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Failed to create user' });
     }
 };
 
@@ -466,34 +474,34 @@ const getCompanyAll = async (req, res) => {
                 // Mapear resultados de las colecciones relacionadas
                 const offers = offersSnapshot.docs.map(doc => {
                     const data = doc.data();
-                    const {companyID, createdAt, ...filtaredOffersData} = data;
+                    const { companyID, createdAt, ...filtaredOffersData } = data;
                     return {
                         id: doc.id,
                         ...filtaredOffersData
-                        };
+                    };
                 });
                 const videos = videosSnapshot.docs.map(doc => {
                     const data = doc.data();
-                    const {companyID, ...filtaredVideoData} = data;
+                    const { companyID, ...filtaredVideoData } = data;
                     return {
                         id: doc.id,
                         ...filtaredVideoData
-                        };
+                    };
                 });
                 const companies = companySnapshot.docs.map(doc => {
                     const data = doc.data();
-                    const {companyID, ...filtaredCompaniesData} = data;
+                    const { companyID, ...filtaredCompaniesData } = data;
                     return {
                         id: doc.id,
                         ...filtaredCompaniesData
-                        };
+                    };
                 });
 
                 let designData = null;
                 if (!designSnapshot.empty) {
                     const designDoc = designSnapshot.docs[0];
                     const designDetails = designDoc.data();
-                    const { standID, modelID, fileID,companyID, createdAt, ...filteredDesign } = designDetails;
+                    const { standID, modelID, fileID, companyID, createdAt, ...filteredDesign } = designDetails;
 
                     // Obtener datos del stand, modelo y archivos relacionados
                     const [standSnapshot, modelSnapshot, fileSnapshot] = await Promise.all([
@@ -503,25 +511,25 @@ const getCompanyAll = async (req, res) => {
                     ]);
 
                     const standData = standSnapshot?.exists
-                    ? (() => {
-                        const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir `stand_config`
-                        return { id: standSnapshot.id, ...filteredData };
-                    })()
-                    : null;
-                
-                const modelData = modelSnapshot?.exists
-                    ? (() => {
-                        const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
-                        return { id: modelSnapshot.id, ...filteredData };
-                    })()
-                    : null;
-                
-                const fileData = fileSnapshot?.exists
-                    ? (() => {
-                        const { companyID, createdAt, ...filteredData } = fileSnapshot.data(); // Puedes aplicar otro filtro aquí si es necesario
-                        return { id: fileSnapshot.id, ...filteredData };
-                    })()
-                    : null;
+                        ? (() => {
+                            const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir `stand_config`
+                            return { id: standSnapshot.id, ...filteredData };
+                        })()
+                        : null;
+
+                    const modelData = modelSnapshot?.exists
+                        ? (() => {
+                            const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
+                            return { id: modelSnapshot.id, ...filteredData };
+                        })()
+                        : null;
+
+                    const fileData = fileSnapshot?.exists
+                        ? (() => {
+                            const { companyID, createdAt, ...filteredData } = fileSnapshot.data(); // Puedes aplicar otro filtro aquí si es necesario
+                            return { id: fileSnapshot.id, ...filteredData };
+                        })()
+                        : null;
 
                     designData = {
                         ...filteredDesign,

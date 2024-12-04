@@ -30,7 +30,7 @@ const upload = multer({ dest: 'udloads/' });
  * @param {Object} res - Objeto de respuesta de Express.
  */
 
-router.post('/register', upload.fields([{ name: 'file' }, { name: 'cv' }]), usersController.register);
+router.post('/register', upload.fields([{ name: 'logo' }, {name: 'profileImagen'}, { name: 'cv' }]), usersController.register);
 
 /**
  * Actualiza los datos de un usuario específico.
