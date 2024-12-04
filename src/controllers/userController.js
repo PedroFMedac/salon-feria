@@ -585,8 +585,8 @@ const getCompanyAll = async (req, res) => {
                             const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
                             return {
                                 id: modelSnapshot.id,
-                                //url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
-                                ...filteredData
+                                ...filteredData,
+                                url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
                         : null;
@@ -596,9 +596,9 @@ const getCompanyAll = async (req, res) => {
                             const { companyID, createdAt, ...filteredData } = fileSnapshot.data(); // Puedes aplicar otro filtro aquí si es necesario
                             return {
                                 id: fileSnapshot.id,
-                                //banner: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.banner}`,
-                                // poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
-                                ...filteredData
+                                ...filteredData,
+                                banner: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.banner}`,
+                                poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
                             };
                         })()
                         : null;
