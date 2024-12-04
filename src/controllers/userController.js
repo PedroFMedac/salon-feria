@@ -522,7 +522,7 @@ const getCompanyAll = async (req, res) => {
                 // Obtener URL del logo si existe
                 // Consultar logo si existe
                 let logoUrl = null;
-                if (user.logo) {
+                if (user.logo && typeof user.logo === 'string' && user.logo.trim() !== '') {
                     const logoDoc = await db.collection('logos').doc(user.logo).get();
                     if (logoDoc.exists) {
                         logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url;
