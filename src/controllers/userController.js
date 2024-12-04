@@ -520,14 +520,14 @@ const getCompanyAll = async (req, res) => {
                     db.collection('logos').where('companyID', '==', user.id).get(),
                 ]);
 
-                const logo = logoSnapshop.docs.map(doc =>{
+                const logo = logoSnapshop.docs.map(doc => {
                     const data = doc.data();
-                    const {companyID, uploadedAt, ...filtaredLogoData} = data;
+                    const { companyID, uploadedAt, ...filtaredLogoData } = data;
                     return {
                         id: doc.id,
                         ...filtaredLogoData,
                         url: `https://backend-node-wpf9.onrender.com/proxy?url=${filtaredLogoData.url}`,
-                        };
+                    };
                 });
 
                 // Mapear resultados de las colecciones relacionadas
@@ -572,31 +572,34 @@ const getCompanyAll = async (req, res) => {
                     const standData = standSnapshot?.exists
                         ? (() => {
                             const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
-                            return { 
+                            return {
                                 id: standSnapshot.id,
-                                //url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
-                                 ...filteredData };
+                                ...filteredData,
+                                url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                            };
                         })()
                         : null;
 
                     const modelData = modelSnapshot?.exists
                         ? (() => {
                             const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
-                            return { 
+                            return {
                                 id: modelSnapshot.id,
                                 //url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
-                                 ...filteredData };
+                                ...filteredData
+                            };
                         })()
                         : null;
 
                     const fileData = fileSnapshot?.exists
                         ? (() => {
                             const { companyID, createdAt, ...filteredData } = fileSnapshot.data(); // Puedes aplicar otro filtro aquí si es necesario
-                            return { 
+                            return {
                                 id: fileSnapshot.id,
                                 //banner: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.banner}`,
-                               // poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
-                                 ...filteredData };
+                                // poster: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.poster}`,
+                                ...filteredData
+                            };
                         })()
                         : null;
 
