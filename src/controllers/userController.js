@@ -57,9 +57,8 @@ const register = async (req, res) => {
         }
 
         // Convertir password a string si es un número
-        const passwordAsString = typeof password === 'number' ? String(password) : password;
+        const hashedPassword = await bcrypt.hash(password, 10)
 
-        const hashedPassword = await bcrypt.hash(passwordAsString, 10);
 
         /*
         // Subir la imagen y el documento a Firebase Storage
