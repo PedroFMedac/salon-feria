@@ -55,11 +55,6 @@ router.delete('/delete/:id', verifyToken, (req, res, next) => {
     if (rol === 'visitor') {
         return res.status(403).json({ error: 'Access denied: Visitors cannot delete offers.' });
     }
-
-    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied: Companies cannot delete offers for other companies.' });
-    }
-
     next();
 }, offersController.deleteOfferById);
 
