@@ -517,7 +517,6 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
-                    user.logo ? db.collection('logos').doc(user.logo).get() : null, // Consulta el logo si tiene ID
                 ]);
 
                 // Mapear resultados de las colecciones relacionadas
@@ -561,7 +560,7 @@ const getCompanyAll = async (req, res) => {
 
                     const standData = standSnapshot?.exists
                         ? (() => {
-                            const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir `stand_config`
+                            const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
                             return { id: standSnapshot.id, ...filteredData };
                         })()
                         : null;
@@ -588,14 +587,8 @@ const getCompanyAll = async (req, res) => {
                     };
                 }
 
-                // Obtener URL del logo si existe
-                const logoUrl = logoDoc && logoDoc.exists ? 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url : null;
-
                 return {
-                    user: {
-                        ...user,
-                        logo: logoUrl, // Reemplazar el ID del logo con la URL
-                    }, // Información del usuario
+                    user, // Información del usuario
                     relatedData: {
                         offers,
                         videos,
