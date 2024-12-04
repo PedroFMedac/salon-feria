@@ -512,7 +512,7 @@ const getCompanyAll = async (req, res) => {
         const results = await Promise.all(
             users.map(async (user) => {
                 // Buscar documentos relacionados en otras colecciones
-                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot, logoSnapshop] = await Promise.all([
+                const [offersSnapshot, videosSnapshot, companySnapshot, designSnapshot, logoSnapshot] = await Promise.all([
                     db.collection('offers').where('companyID', '==', user.id).get(),
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
@@ -520,7 +520,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('logos').where('companyID', '==', user.id).get(),
                 ]);
 
-                const logo = logoSnapshop.docs.map(doc => {
+                const logo = logoSnapshot.docs.map(doc => {
                     const data = doc.data();
                     const { companyID, uploadedAt, ...filtaredLogoData } = data;
                     return {

@@ -33,12 +33,21 @@ const addOffers = async (req, res) => {
             return res.status(404).json({ message: 'No se encontró información de la empresa' });
         }
 
-        const companyData = companySnapshot.data();
-
-        // Verificar si la empresa tiene un logo
-        if (!companyData.logo) {
-            return res.status(400).json({ message: 'No se encontró un logo para esta empresa' });
+        const logoSnapshot = await db.collection('logos').where('companyID', '==', id).get();
+        if (logoSnapshot.empty) {
+            return res.status(404).json({
+                message: 'No se encontró logo de la empresa'
+            });
         }
+        const logoDoc = logoSnapshot.docs[0]; // Tomar el primer logo
+        const logo = logoDoc
+            ? {
+                id: logoDoc.id,
+                url: `https://backend-node-wpf9.onrender.com/proxy?url=${logoDoc.data().url}`,
+            }
+            : null;
+
+        const companyData = companySnapshot.data();
 
         // Crear la nueva oferta con los datos obtenidos
         const newOffer = {
@@ -49,7 +58,7 @@ const addOffers = async (req, res) => {
             description,
             companyID: id,
             sector: sector || null, // Valor opcional
-            logo: companyData.logo, // Logo de la empresa
+            logo, // Logo de la empresa
             companyName: companyData.company, // Nombre de la empresa
             createdAt: admin.firestore.Timestamp.now(), // Timestamp
         };
@@ -82,7 +91,7 @@ const addOffers = async (req, res) => {
  * @param {Object} res - Objeto de respuesta HTTP.
  * @returns {Object} JSON con las ofertas de la empresa.
  */
-const  getOffersById = async (req, res) => {
+const getOffersById = async (req, res) => {
     try {
         // Determinar el ID según el rol
         const id = req.user.rol === 'admin' ? req.params.id : req.user.id;
