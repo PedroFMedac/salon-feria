@@ -90,7 +90,7 @@ const addInfCompany = async (req, res) => {
             });
         };
 
-        const userDocRef = db.collection('users').doc(companyID);
+        const userDocRef = db.collection('users').where('companyID', '==', companyID);
         await userDocRef.update({
             information: true
         });
@@ -123,7 +123,7 @@ const addInfCompany = async (req, res) => {
 
         const newInfCompany = {
             description,
-            information: additional_information || '',
+            additional_information: additional_information || '',
             companyID,
             links: links || [],
             documents: uploadedDocuments || [],
