@@ -160,7 +160,7 @@ const register = async (req, res) => {
 
         }
 
-        res.status(201).json({ message: 'User created successfully', id: userRef.id });
+        res.status(201).json({ message: 'User created successfully', userData });
     } catch (error) {
         console.error('Error creating user:', error);
         res.status(500).json({ error: 'Failed to create user' });
