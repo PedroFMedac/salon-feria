@@ -22,10 +22,6 @@ router.post('/add/:id?', verifyToken, (req, res, next) => {
         return res.status(403).json({ error: 'Access denied: Visitors cannot add offers.' });
     }
 
-    if (rol === 'co' && req.params.id && req.params.id !== req.user.id) {
-        return res.status(403).json({ error: 'Access denied: Companies cannot add offers for other companies.' });
-    }
-
     next();
 }, offersController.addOffers);
 
