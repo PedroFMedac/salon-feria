@@ -90,6 +90,11 @@ const addInfCompany = async (req, res) => {
             });
         };
 
+        const userDocRef = db.collection('users').doc(companyID);
+        await userDocRef.update({
+            information: true
+        });
+
         // Obtener los datos actualizados del usuario después de realizar cambios
         const updatedUserSnapshot = await userDocRef.get();
         const updatedUser = updatedUserSnapshot.data();
