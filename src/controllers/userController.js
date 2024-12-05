@@ -583,7 +583,6 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: standSnapshot.id,
                                 ...filteredData,
-                                name: filteredData.url.fileMetada.name,
                                 url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
@@ -595,7 +594,6 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: modelSnapshot.id,
                                 ...filteredData,
-                                name: filteredData.url.fileMetada.name,
                                 url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
