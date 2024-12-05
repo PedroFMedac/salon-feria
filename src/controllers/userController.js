@@ -579,10 +579,11 @@ const getCompanyAll = async (req, res) => {
 
                     const standData = standSnapshot?.exists
                         ? (() => {
-                            const { stand_config, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
+                            const { standConfig, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
                             return {
                                 id: standSnapshot.id,
                                 ...filteredData,
+                                name: filteredData.url.fileMetada.name,
                                 url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
@@ -594,6 +595,7 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: modelSnapshot.id,
                                 ...filteredData,
+                                name: filteredData.url.fileMetada.name,
                                 url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
