@@ -239,16 +239,29 @@ const getAllDesigns = async (req, res) => {
                 const designData = { id: doc.id, ...doc.data() };
 
                 // Obtener datos del stand relacionado
-                const standSnapshot = await db.collection('stand').doc(designData.standID).get();
-                const standData = standSnapshot.exists
-                    ? { id: standSnapshot.id, ...standSnapshot.data() }
-                    : null;
+                const standData = standSnapshot?.exists
+                ? (() => {
+                    const {uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
+                    return {
+                        id: standSnapshot.id,
+                        ...filteredData,
+                        name: filteredData.url.name,
+                        url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                    };
+                })()
+                : null;
 
                 // Obtener datos del modelo relacionado
-                const modelSnapshot = await db.collection('model').doc(designData.modelID).get();
-                const modelData = modelSnapshot.exists
-                    ? { id: modelSnapshot.id, ...modelSnapshot.data() }
-                    : null;
+                const modelData = modelSnapshot?.exists
+                ? (() => {
+                    const {uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
+                    return {
+                        id: modelSnapshot.id,
+                        ...filteredData,
+                        url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                    };
+                })()
+                : null;
 
                 // Obtener datos del archivo relacionado
                 const fileSnapshot = await db.collection('files').doc(designData.fileID).get();
