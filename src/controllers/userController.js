@@ -309,11 +309,14 @@ const getAllUsers = async (req, res) => {
                 const { password, createdAt, logo: logoId, ...filteredData } = data; // Excluir campos sensibles
                 let logoUrl = null;
 
-                // Si el usuario tiene un logoId, buscar la URL en la colección 'logos'
+                // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
                 if (logoId) {
-                    const logoDoc = await db.collection('logos').doc(logoId).get();
-                    if (logoDoc.exists) {
-                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url; // Obtener la URL del logo
+                    const logoSnapshot = await db.collection('logos').where('companyID', '==', doc.id).get();
+    
+                    if (!logoSnapshot.empty) {
+                        const logoDoc = logoSnapshot.docs[0]; // Tomar el primer documento encontrado
+                        const logoData = logoDoc.data();
+                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoData.url; // Extraer la URL del logo
                     }
                 }
 
