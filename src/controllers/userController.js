@@ -189,14 +189,16 @@ const getAllCompany = async (req, res) => {
             companyDoc.docs.map(async (doc) => {
                 const data = doc.data();
                 const { password, createdAt, rol, logo: logoId, ...filteredData } = data; // Excluir contraseña
-
                 let logoUrl = null;
 
                 // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
                 if (logoId) {
-                    const logoDoc = await db.collection('logos').doc(logoId).get();
-                    if (logoDoc.exists) {
-                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url; // Extraer la URL del logo
+                    const logoSnapshot = await db.collection('logos').where('companyID', '==', doc.id).get();
+    
+                    if (!logoSnapshot.empty) {
+                        const logoDoc = logoSnapshot.docs[0]; // Tomar el primer documento encontrado
+                        const logoData = logoDoc.data();
+                        logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoData.url; // Extraer la URL del logo
                     }
                 }
 
