@@ -193,7 +193,7 @@ const getAllCompany = async (req, res) => {
 
                 // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
                 if (logoId) {
-                    const logoSnapshot = await db.collection('logos').where('companyID', '==', doc.id).get();
+                    const logoSnapshot = await db.collection('logos').where('companyId', '==', doc.id).get();
     
                     if (!logoSnapshot.empty) {
                         const logoDoc = logoSnapshot.docs[0]; // Tomar el primer documento encontrado
@@ -311,7 +311,7 @@ const getAllUsers = async (req, res) => {
 
                 // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
                 if (logoId) {
-                    const logoSnapshot = await db.collection('logos').where('companyID', '==', doc.id).get();
+                    const logoSnapshot = await db.collection('logos').where('companyId', '==', doc.id).get();
     
                     if (!logoSnapshot.empty) {
                         const logoDoc = logoSnapshot.docs[0]; // Tomar el primer documento encontrado
@@ -360,11 +360,14 @@ const getUserById = async (req, res) => {
         const { password, logo: logoId, ...filteredData } = userData; // Excluir contraseña y obtener logoId
         let logoUrl = null;
 
-        // Si el usuario tiene un logoId, buscar la URL en la colección 'logos'
+        // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
         if (logoId) {
-            const logoDoc = await db.collection('logos').doc(logoId).get();
-            if (logoDoc.exists) {
-                logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoDoc.data().url; // Obtener la URL del logo
+            const logoSnapshot = await db.collection('logos').where('companyId', '==', doc.id).get();
+
+            if (!logoSnapshot.empty) {
+                const logoDoc = logoSnapshot.docs[0]; // Tomar el primer documento encontrado
+                const logoData = logoDoc.data();
+                logoUrl = 'https://backend-node-wpf9.onrender.com/proxy?url=' + logoData.url; // Extraer la URL del logo
             }
         }
 
@@ -522,7 +525,7 @@ const getCompanyAll = async (req, res) => {
                     db.collection('video').where('companyID', '==', user.id).get(),
                     db.collection('company').where('companyID', '==', user.id).get(),
                     db.collection('design').where('companyID', '==', user.id).get(),
-                    db.collection('logos').where('companyID', '==', user.id).get(),
+                    db.collection('logos').where('companyId', '==', user.id).get(),
                 ]);
 
                 const logo = logoSnapshot.docs.map(doc => {
