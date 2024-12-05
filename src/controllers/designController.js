@@ -86,7 +86,7 @@ const createDesign = async (req, res) => {
             return res.status(404).json({ message: 'User not found, cannot retrieve logo.' });
         }
 
-        const logoSnapshot = await db.collection('logos').where('companyID', '==', id).get();
+        const logoSnapshot = await db.collection('logos').where('companyId', '==', id).get();
         if (logoSnapshot.empty) {
             return res.status(404).json({
                 message: 'No se encontró logo de la empresa'
