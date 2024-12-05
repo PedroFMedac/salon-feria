@@ -19,6 +19,7 @@ const addOffers = async (req, res) => {
 
     const { position, workplace_type, location, job_type, sector, description, link } = req.body;
     const id = req.user.rol === 'admin' ? req.params.id : req.user.id;
+    console.log('ID de la empresa para la oferta:', id);
 
     try {
         // Validar los campos obligatorios
