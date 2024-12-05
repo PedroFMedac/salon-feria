@@ -182,14 +182,34 @@ const getDesign = async (req, res) => {
         if (!standSnapshot.exists) {
             console.warn(`Stand with ID ${designData.standID} not found.`);
         }
-        const standData = standSnapshot.exists ? { id: standSnapshot.id, ...standSnapshot.data() } : null;
+        const standData = standSnapshot?.exists
+            ? (() => {
+                const { standConfig, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
+                return {
+                    id: standSnapshot.id,
+                    ...filteredData,
+                    name: filteredData.url.name,
+                    url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                };
+            })()
+            : null;
 
         // Obtener datos del modelo relacionado
         const modelSnapshot = await db.collection('model').doc(designData.modelID).get();
         if (!modelSnapshot.exists) {
             console.warn(`Model with ID ${designData.modelID} not found.`);
         }
-        const modelData = modelSnapshot.exists ? { id: modelSnapshot.id, ...modelSnapshot.data() } : null;
+        const modelData = modelSnapshot?.exists
+            ? (() => {
+                const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
+                return {
+                    id: modelSnapshot.id,
+                    ...filteredData,
+
+                    url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                };
+            })()
+            : null;
 
         // Obtener datos del archivo relacionado
         const fileSnapshot = await db.collection('files').doc(designData.fileID).get();
@@ -240,28 +260,28 @@ const getAllDesigns = async (req, res) => {
 
                 // Obtener datos del stand relacionado
                 const standData = standSnapshot?.exists
-                ? (() => {
-                    const {uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
-                    return {
-                        id: standSnapshot.id,
-                        ...filteredData,
-                        name: filteredData.url.name,
-                        url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
-                    };
-                })()
-                : null;
+                    ? (() => {
+                        const { uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
+                        return {
+                            id: standSnapshot.id,
+                            ...filteredData,
+                            name: filteredData.url.name,
+                            url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                        };
+                    })()
+                    : null;
 
                 // Obtener datos del modelo relacionado
                 const modelData = modelSnapshot?.exists
-                ? (() => {
-                    const {uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
-                    return {
-                        id: modelSnapshot.id,
-                        ...filteredData,
-                        url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
-                    };
-                })()
-                : null;
+                    ? (() => {
+                        const { uploadedAt, ...filteredData } = modelSnapshot.data(); // Puedes aplicar un filtro similar aquí si es necesario
+                        return {
+                            id: modelSnapshot.id,
+                            ...filteredData,
+                            url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                        };
+                    })()
+                    : null;
 
                 // Obtener datos del archivo relacionado
                 const fileSnapshot = await db.collection('files').doc(designData.fileID).get();
