@@ -39,7 +39,7 @@ const addInfCompany = async (req, res) => {
             return res.status(400).json({ message: 'Description is required' });
         }
 
-        const validLinks = links && links.every(link => link.aditionalButtonTitle && link.additionalButtonLink);
+        const validLinks = links && links.every(link => link.additionalButtonTitle && link.additionalButtonLink);
         if (!validLinks) {
             return res.status(400).json({ message: 'Links must have aditionalButtonTitle and additionalButtonLink' });
         }
