@@ -38,13 +38,13 @@ const createDesign = async (req, res) => {
         // Verificar si ya existe un diseño para esta compañía
         const existDesign = await db.collection('design').where('companyID', '==', id).get();
         if (!existDesign.empty) {
-            return res.status(400).json({ message: 'Design already exists for this company' });
+            return res.status(401).json({ message: 'Design already exists for this company' });
         }
 
         // Verificar si ya existen archivos asociados a esta compañía
         const existFile = await db.collection('files').where('companyID', '==', id).get();
         if (!existFile.empty) {
-            return res.status(400).json({ message: 'Files already exist for this company.' });
+            return res.status(402).json({ message: 'Files already exist for this company.' });
         }
 
         let bannerUrl = null;
