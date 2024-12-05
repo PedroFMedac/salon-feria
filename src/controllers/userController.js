@@ -582,6 +582,7 @@ const getCompanyAll = async (req, res) => {
                             const { standConfig, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
                             return {
                                 id: standSnapshot.id,
+                                name: filteredData.url.name,
                                 ...filteredData,
                                 name: filteredData.url.name,
                                 url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
@@ -595,7 +596,6 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: modelSnapshot.id,
                                 ...filteredData,
-
                                 url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
