@@ -362,7 +362,7 @@ const getUserById = async (req, res) => {
 
         // Si la empresa tiene un logoId, buscar la URL en la colección 'logos'
         if (logoId) {
-            const logoSnapshot = await db.collection('logos').where('companyId', '==', doc.id).get();
+            const logoSnapshot = await db.collection('logos').where('companyId', '==', userDoc.id).get();
 
             if (!logoSnapshot.empty) {
                 const logoDoc = logoSnapshot.docs[0]; // Tomar el primer documento encontrado
