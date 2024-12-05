@@ -583,7 +583,7 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: standSnapshot.id,
                                 ...filteredData,
-                                url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                                url_stand: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
                         : null;
@@ -594,7 +594,7 @@ const getCompanyAll = async (req, res) => {
                             return {
                                 id: modelSnapshot.id,
                                 ...filteredData,
-                                url: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
+                                url_model: `https://backend-node-wpf9.onrender.com/proxy?url=${filteredData.url.fileUrl}`,
                             };
                         })()
                         : null;
