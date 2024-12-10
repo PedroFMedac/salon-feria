@@ -184,7 +184,7 @@ const getDesign = async (req, res) => {
         }
         const standData = standSnapshot?.exists
             ? (() => {
-                const { standConfig, uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
+                const { uploadedAt, ...filteredData } = standSnapshot.data(); // Excluir stand_config
                 return {
                     id: standSnapshot.id,
                     ...filteredData,
