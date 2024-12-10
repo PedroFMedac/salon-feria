@@ -17,7 +17,7 @@ const app = express();
 
 app.use(cookieParser());
 app.use(cors({
-    origin: ['http://localhost:4200','http://localhost:3000', 'https://salon-feria-frontend.vercel.app/'], // Dirección de tu frontend
+    origin: ['http://localhost:4200','http://localhost:3000', 'https://salon-feria-frontend.vercel.app'], // Dirección de tu frontend
     credentials: true // Necesario si trabajas con cookies
 }));
 app.use(express.json());
