@@ -170,5 +170,11 @@ router.get('/companies/unity', verifyToken, (req, res, next) => {
     next(); // Continuar con el controlador si es admin
 }, usersController.getCompanyAll);
 
+router.put(
+    '/users/logo/:id?',
+    upload.single('logo'), // Middleware para subir un único archivo
+    verifyToken,
+    usersController.updateLogo
+  );
 
 module.exports = router;

@@ -642,4 +642,68 @@ const getCompanyAll = async (req, res) => {
     }
 };
 
-module.exports = { register, getAllCompany, getAllVisitor, getAllAdmin, getAllUsers, getUserById, updateUser, deleterUser, getCompanyAll };
+/**
+ * Actualiza el logo de una empresa.
+ * 
+ * @param {Object} req - Objeto de solicitud de Express.
+ * @param {string} req.params.id - ID del usuario (empresa) cuyo logo se actualizará.
+ * @param {file} req.files.logo - Nuevo archivo de logo.
+ * @param {Object} res - Objeto de respuesta de Express.
+ * @returns {Object} Respuesta JSON con mensaje de éxito o error.
+ */
+const updateLogo = async (req, res) => {
+    const id = req.user.rol === 'admin' ? req.params.id : req.user.id;
+    const logoUpload = req.files?.logo ? req.files.logo[0] : null; // Nuevo archivo de logo
+
+    if (!logoUpload) {
+        return res.status(400).json({ message: 'No logo file provided.' });
+    }
+
+    try {
+        // Buscar el usuario por ID
+        const userDoc = await db.collection('users').doc(id).get();
+
+        if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        const userData = userDoc.data();
+
+        // Verificar si el usuario tiene un logo asociado
+        const logoSnapshot = await db.collection('logos').where('companyId', '==', id).get();
+
+        if (logoSnapshot.empty) {
+            return res.status(404).json({ message: 'Logo not found for this user.' });
+        }
+
+        const logoDoc = logoSnapshot.docs[0];
+        const logoData = logoDoc.data();
+
+        // Eliminar el logo anterior de Google Drive
+        const previousLogoFileId = logoData.url.split('id=')[1].split('&')[0]; // Extraer el file ID del URL
+        await admin.drive.files.delete({ fileId: previousLogoFileId });
+
+        // Subir el nuevo logo a Google Drive
+        const newLogoResponse = await uploadFileToDrive(logoUpload, 'logos');
+        const newLogoUrl = newLogoResponse.webViewLink;
+
+        // Actualizar la URL del logo en Firestore
+        await db.collection('logos').doc(logoDoc.id).update({
+            url: newLogoUrl,
+            uploadedAt: admin.firestore.Timestamp.now(),
+        });
+
+        // Limpia el archivo temporal
+        fs.unlink(logoUpload.path, (err) => {
+            if (err) console.error('Error eliminando archivo temporal:', err);
+        });
+
+        res.status(200).json({ message: 'Logo updated successfully', newLogoUrl });
+    } catch (error) {
+        console.error('Error updating logo:', error);
+        res.status(500).json({ error: 'Failed to update logo' });
+    }
+};
+
+
+module.exports = { register, getAllCompany, getAllVisitor, getAllAdmin, getAllUsers, getUserById, updateUser, deleterUser, getCompanyAll, updateLogo };
