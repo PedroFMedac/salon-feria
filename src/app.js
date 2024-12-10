@@ -16,10 +16,16 @@ const videoRoutes = require ('./routes/video');
 const app = express();
 
 app.use(cookieParser());
-app.use(cors({
-    origin: ['http://localhost:4200','http://localhost:3000', 'https://salon-feria-frontend.vercel.app'], // Dirección de tu frontend
-    credentials: true // Necesario si trabajas con cookies
-}));
+const corsOptions = {
+  origin: ['http://localhost:4200', 'http://localhost:3000', 'https://salon-feria-frontend.vercel.app'], // Dominios permitidos
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos HTTP permitidos
+  credentials: true, // Permitir cookies y encabezados de autenticación
+};
+
+app.use(cors(corsOptions));
+
+// Maneja solicitudes OPTIONS automáticamente
+app.options('*', cors(corsOptions));
 app.use(express.json());
 
 app.get('/proxy', async (req, res) => {
